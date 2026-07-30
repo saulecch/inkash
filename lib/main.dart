@@ -39,31 +39,38 @@ class MyApp extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 22),
+              const SizedBox(height: 22),
               Row(
-                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   Expanded(
                     child: Container(
-                      padding: EdgeInsets.all(10),
-                      height: 60,
-                      color: Colors.grey,
+                      color: Colors.grey.shade300,
+                      padding: const EdgeInsets.all(14),
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [Text('Cuentas'), Text('Q.7810.00')],
+                        children: const [
+                          Text('Cuentas', style: TextStyle(fontSize: 11)),
+                          SizedBox(height: 2),
+                          Text('Q7,810.00', style: TextStyle(fontSize: 19)),
+                        ],
                       ),
                     ),
                   ),
-                  SizedBox(width: 10),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Container(
-                      padding: EdgeInsets.all(10),
-                      height: 60,
-                      color: Colors.grey,
+                      color: Colors.grey.shade300,
+                      padding: const EdgeInsets.all(14),
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [Text('Metas de ahorro'), Text('3 activas')],
+                        children: const [
+                          Text(
+                            'Metas de ahorro',
+                            style: TextStyle(fontSize: 11),
+                          ),
+                          SizedBox(height: 2),
+                          Text('3 activas', style: TextStyle(fontSize: 19)),
+                        ],
                       ),
                     ),
                   ),
