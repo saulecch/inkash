@@ -38,6 +38,37 @@ class MyApp extends StatelessWidget {
                   ),
                 ],
               ),
+              const SizedBox(height: 22),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Container(
+                      padding: EdgeInsets.all(10),
+                      height: 60,
+                      color: Colors.grey,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [Text('Cuentas'), Text('Q.7810.00')],
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Container(
+                      padding: EdgeInsets.all(10),
+                      height: 60,
+                      color: Colors.grey,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [Text('Metas de ahorro'), Text('3 activas')],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
         ),
