@@ -39,7 +39,6 @@ class MyApp extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 22),
-              const SizedBox(height: 22),
               Row(
                 children: [
                   Expanded(
@@ -74,6 +73,14 @@ class MyApp extends StatelessWidget {
                       ),
                     ),
                   ),
+                ],
+              ),
+              const SizedBox(height: 28),
+              Row(
+                children: const [
+                  Text('Últimos movimientos', style: TextStyle(fontSize: 20)),
+                  Spacer(),
+                  Text('Ver todo', style: TextStyle(fontSize: 13)),
                 ],
               ),
             ],
