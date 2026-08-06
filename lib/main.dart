@@ -26,6 +26,10 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         brightness: Brightness.dark,
         scaffoldBackgroundColor: kFondo,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: kLima,
+          brightness: Brightness.dark,
+        ),
       ),
       home: Scaffold(
         body: SafeArea(
@@ -34,7 +38,10 @@ class MyApp extends StatelessWidget {
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [Text('Hola, Kevin'), Text('Julio 2026')],
+                children: [
+                  Text('Hola, Kevin'),
+                  Text('Julio 2026', style: TextStyle(color: kMuted)),
+                ],
               ),
               const SizedBox(height: 22),
               Column(
@@ -76,46 +83,53 @@ class MyApp extends StatelessWidget {
               ),
               const SizedBox(height: 28),
               Row(
-                children: const [
+                children: [
                   Text('Últimos movimientos', style: TextStyle(fontSize: 20)),
                   Spacer(),
-                  Text('Ver todo', style: TextStyle(fontSize: 13)),
+                  TextButton(
+                    onPressed: () {},
+                    child: Text(
+                      'Ver todo',
+                      style: TextStyle(fontSize: 13, color: kLima),
+                    ),
+                  ),
                 ],
               ),
               filaMovimiento(
-                Icons.directions_bus,
-                'Uber al trabajo',
-                'Transporte · Tarjeta',
-                '− Q38.00',
-                'Hoy',
+                icon: Icons.directions_bus,
+                title: 'Uber al trabajo',
+                subtitle: 'Transporte · Tarjeta',
+                amount: '− Q38.00',
+                date: 'Hoy',
               ),
               filaMovimiento(
-                Icons.shopping_cart,
-                'Súper La Torre',
-                'Súper y comida · Tarjeta',
-                '− Q285.50',
-                'Ayer',
+                icon: Icons.shopping_cart,
+                title: 'Súper La Torre',
+                subtitle: 'Súper y comida · Tarjeta',
+                amount: '− Q285.50',
+                date: 'Ayer',
               ),
               filaMovimiento(
-                Icons.arrow_upward,
-                'Salario quincena',
-                'Ingreso · Banco',
-                '+ Q4,200.00',
-                'Ayer',
+                icon: Icons.arrow_upward,
+                title: 'Salario quincena',
+                subtitle: 'Ingreso · Banco',
+                amount: '+ Q4,200.00',
+                date: 'Ayer',
+                isIncome: true,
               ),
               filaMovimiento(
-                Icons.local_cafe,
-                'Café con Ana',
-                'Entretenimiento · Efectivo',
-                '− Q65.00',
-                'Ayer',
+                icon: Icons.local_cafe,
+                title: 'Café con Ana',
+                subtitle: 'Entretenimiento · Efectivo',
+                amount: '− Q65.00',
+                date: 'Ayer',
               ),
               filaMovimiento(
-                Icons.bolt,
-                'Recibo de luz (EEGSA)',
-                'Servicios · Banco',
-                '− Q420.00',
-                'Lun 20',
+                icon: Icons.bolt,
+                title: 'Recibo de luz (EEGSA)',
+                subtitle: 'Servicios · Banco',
+                amount: '− Q420.00',
+                date: 'Lun 20',
               ),
             ],
           ),
@@ -123,6 +137,7 @@ class MyApp extends StatelessWidget {
         bottomNavigationBar: BottomNavigationBar(
           currentIndex: 0,
           type: BottomNavigationBarType.fixed,
+          selectedItemColor: kLima,
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Inicio'),
             BottomNavigationBarItem(
@@ -148,20 +163,35 @@ class MyApp extends StatelessWidget {
   }
 }
 
-Widget filaMovimiento(
-  IconData icon,
-  String title,
-  String subtitle,
-  String amount,
-  String date,
-) {
+Widget filaMovimiento({
+  required IconData icon,
+  required String title,
+  required String subtitle,
+  required String amount,
+  required String date,
+  bool isIncome = false,
+}) {
   return ListTile(
-    leading: Icon(icon),
-    title: Text(title),
-    subtitle: Text(subtitle),
+    leading: Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        color: kIconoFondo,
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: Icon(icon, color: kLima),
+    ),
+    title: Text(title, style: TextStyle(color: kTexto)),
+    subtitle: Text(subtitle, style: TextStyle(color: kMuted)),
     trailing: Column(
       crossAxisAlignment: CrossAxisAlignment.end,
-      children: [Text(amount), Text(date)],
+      children: [
+        Text(
+          amount,
+          style: TextStyle(fontSize: 13, color: isIncome ? kLima : kTexto),
+        ),
+        Text(date, style: TextStyle(fontSize: 10, color: kMuted)),
+      ],
     ),
   );
 }
@@ -169,12 +199,16 @@ Widget filaMovimiento(
 Widget tarjetaHero(String title, String body) {
   return Expanded(
     child: Container(
-      color: kSuperficie,
+      decoration: BoxDecoration(
+        color: kSuperficie,
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: kBorde),
+      ),
       padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: TextStyle(fontSize: 11)),
+          Text(title, style: TextStyle(fontSize: 11, color: kMuted)),
           SizedBox(height: 2),
           Text(body, style: TextStyle(fontSize: 19)),
         ],
