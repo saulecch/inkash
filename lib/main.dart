@@ -40,11 +40,25 @@ class MyApp extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: const [
-                  Text('TE QUEDAN DISPONIBLES', style: TextStyle(fontSize: 11)),
-                  SizedBox(height: 6),
-                  Text('Q2,796.50', style: TextStyle(fontSize: 52)),
+                  Text(
+                    'TE QUEDAN DISPONIBLES',
+                    style: TextStyle(fontSize: 11, color: kLima),
+                  ),
+                  Text(
+                    'Q2,796.50',
+                    style: TextStyle(
+                      fontSize: 52,
+                      color: kTexto,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                   SizedBox(height: 16),
-                  LinearProgressIndicator(value: 0.57),
+                  LinearProgressIndicator(
+                    value: 0.57,
+                    color: kLima,
+                    minHeight: 8.0,
+                    // backgroundColor: Colors.blue,
+                  ),
                   SizedBox(height: 7),
                   Text(
                     'Has usado Q3,703.50 de Q6,500.00',
