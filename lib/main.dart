@@ -4,6 +4,17 @@ void main() {
   runApp(const MyApp());
 }
 
+// Paleta del design system del prototipo (broadsheet dark):
+const kFondo = Color(0xFF0E120C);
+const kSuperficie = Color(0xFF181E14);
+const kBorde = Color(0xFF2A3222);
+const kTexto = Color(0xFFF1F4EA);
+const kMuted = Color(0xFF8F9C80);
+const kLima = Color(0xFFC8F54E); // --color-accent
+const kIconoFondo = Color(0xFF37491C); // --color-accent-300
+
+const kFig = TextStyle(fontFamily: 'monospace'); // cifras (Azeret Mono)
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -12,7 +23,10 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Inkash',
-      theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.deepPurple)),
+      theme: ThemeData(
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: kFondo,
+      ),
       home: Scaffold(
         body: SafeArea(
           child: ListView(
@@ -43,7 +57,7 @@ class MyApp extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Container(
-                      color: Colors.grey.shade300,
+                      color: kSuperficie,
                       padding: const EdgeInsets.all(14),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -58,7 +72,7 @@ class MyApp extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Container(
-                      color: Colors.grey.shade300,
+                      color: kSuperficie,
                       padding: const EdgeInsets.all(14),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
