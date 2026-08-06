@@ -55,38 +55,9 @@ class MyApp extends StatelessWidget {
               const SizedBox(height: 22),
               Row(
                 children: [
-                  Expanded(
-                    child: Container(
-                      color: kSuperficie,
-                      padding: const EdgeInsets.all(14),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
-                          Text('Cuentas', style: TextStyle(fontSize: 11)),
-                          SizedBox(height: 2),
-                          Text('Q7,810.00', style: TextStyle(fontSize: 19)),
-                        ],
-                      ),
-                    ),
-                  ),
+                  tarjetaHero('Cuentas', 'Q7,810.00'),
                   const SizedBox(width: 12),
-                  Expanded(
-                    child: Container(
-                      color: kSuperficie,
-                      padding: const EdgeInsets.all(14),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
-                          Text(
-                            'Metas de ahorro',
-                            style: TextStyle(fontSize: 11),
-                          ),
-                          SizedBox(height: 2),
-                          Text('3 activas', style: TextStyle(fontSize: 19)),
-                        ],
-                      ),
-                    ),
-                  ),
+                  tarjetaHero('Metas de ahorro', '3 activas'),
                 ],
               ),
               const SizedBox(height: 28),
@@ -177,6 +148,23 @@ Widget filaMovimiento(
     trailing: Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [Text(amount), Text(date)],
+    ),
+  );
+}
+
+Widget tarjetaHero(String title, String body) {
+  return Expanded(
+    child: Container(
+      color: kSuperficie,
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: TextStyle(fontSize: 11)),
+          SizedBox(height: 2),
+          Text(body, style: TextStyle(fontSize: 19)),
+        ],
+      ),
     ),
   );
 }
