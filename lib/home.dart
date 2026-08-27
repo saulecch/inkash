@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:inkash/features/home/presentation/controllers/home_controller.dart';
 import 'package:inkash/theme.dart';
 
 class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+  const HomePage({required this.controller, super.key});
+
+  final MovimientosController controller;
 
   @override
   Widget build(BuildContext context) {
+    // La pantalla recibe los resultados desde el controlador.
+    final totalGastado = controller.totalGastadoCentavos;
+    final saldoDisponible = controller.saldoDisponibleCentavos;
+
     return Scaffold(
       body: SafeArea(
         child: ListView(
@@ -21,30 +28,30 @@ class HomePage extends StatelessWidget {
             const SizedBox(height: 22),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text(
+              children: [
+                const Text(
                   'TE QUEDAN DISPONIBLES',
                   style: TextStyle(fontSize: 11, color: kLima),
                 ),
                 Text(
-                  'Q2,796.50',
-                  style: TextStyle(
+                  _formatQuetzales(saldoDisponible),
+                  style: const TextStyle(
                     fontSize: 52,
                     color: kTexto,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 LinearProgressIndicator(
-                  value: 0.57,
+                  value: totalGastado / controller.limiteMensualCentavos,
                   color: kLima,
                   minHeight: 8.0,
-                  // backgroundColor: Colors.blue,
                 ),
-                SizedBox(height: 7),
+                const SizedBox(height: 7),
                 Text(
-                  'Has usado Q3,703.50 de Q6,500.00',
-                  style: TextStyle(fontSize: 12),
+                  'Has usado ${_formatQuetzales(totalGastado)} '
+                  'de ${_formatQuetzales(controller.limiteMensualCentavos)}',
+                  style: const TextStyle(fontSize: 12),
                 ),
               ],
             ),
@@ -185,5 +192,16 @@ class HomePage extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _formatQuetzales(int centavos) {
+    // La UI convierte los centavos a un texto legible para el usuario.
+    final entero = centavos ~/ 100;
+    final decimales = (centavos % 100).toString().padLeft(2, '0');
+    final miles = entero.toString().replaceAllMapped(
+      RegExp(r'\B(?=(\d{3})+(?!\d))'),
+      (match) => ',',
+    );
+    return 'Q$miles.$decimales';
   }
 }
