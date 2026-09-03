@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:inkash/core/format/formato_moneda.dart';
+import 'package:inkash/features/home/domain/movimiento.dart';
 import 'package:inkash/features/home/presentation/controllers/home_controller.dart';
 import 'package:inkash/theme.dart';
 
@@ -7,11 +9,12 @@ class HomePage extends StatelessWidget {
 
   final MovimientosController controller;
 
+  // La pantalla recibe los resultados desde el controlador.
   @override
   Widget build(BuildContext context) {
-    // La pantalla recibe los resultados desde el controlador.
     final totalGastado = controller.totalGastadoCentavos;
     final saldoDisponible = controller.saldoDisponibleCentavos;
+    final movimientos = controller.movimientos;
 
     return Scaffold(
       body: SafeArea(
@@ -34,7 +37,7 @@ class HomePage extends StatelessWidget {
                   style: TextStyle(fontSize: 11, color: kLima),
                 ),
                 Text(
-                  _formatQuetzales(saldoDisponible),
+                  formatQuetzales(saldoDisponible),
                   style: const TextStyle(
                     fontSize: 52,
                     color: kTexto,
@@ -49,8 +52,8 @@ class HomePage extends StatelessWidget {
                 ),
                 const SizedBox(height: 7),
                 Text(
-                  'Has usado ${_formatQuetzales(totalGastado)} '
-                  'de ${_formatQuetzales(controller.limiteMensualCentavos)}',
+                  'Has usado ${formatQuetzales(totalGastado)} '
+                  'de ${formatQuetzales(controller.limiteMensualCentavos)}',
                   style: const TextStyle(fontSize: 12),
                 ),
               ],
@@ -77,42 +80,7 @@ class HomePage extends StatelessWidget {
                 ),
               ],
             ),
-            filaMovimiento(
-              icon: Icons.directions_bus,
-              title: 'Uber al trabajo',
-              subtitle: 'Transporte · Tarjeta',
-              amount: '− Q38.00',
-              date: 'Hoy',
-            ),
-            filaMovimiento(
-              icon: Icons.shopping_cart,
-              title: 'Súper La Torre',
-              subtitle: 'Súper y comida · Tarjeta',
-              amount: '− Q285.50',
-              date: 'Ayer',
-            ),
-            filaMovimiento(
-              icon: Icons.arrow_upward,
-              title: 'Salario quincena',
-              subtitle: 'Ingreso · Banco',
-              amount: '+ Q4,200.00',
-              date: 'Ayer',
-              isIncome: true,
-            ),
-            filaMovimiento(
-              icon: Icons.local_cafe,
-              title: 'Café con Ana',
-              subtitle: 'Entretenimiento · Efectivo',
-              amount: '− Q65.00',
-              date: 'Ayer',
-            ),
-            filaMovimiento(
-              icon: Icons.bolt,
-              title: 'Recibo de luz (EEGSA)',
-              subtitle: 'Servicios · Banco',
-              amount: '− Q420.00',
-              date: 'Lun 20',
-            ),
+            ...movimientos.map(filaMovimiento),
           ],
         ),
       ),
@@ -140,14 +108,7 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget filaMovimiento({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required String amount,
-    required String date,
-    bool isIncome = false,
-  }) {
+  Widget filaMovimiento(Movimiento movimiento) {
     return ListTile(
       leading: Container(
         width: 40,
@@ -156,21 +117,40 @@ class HomePage extends StatelessWidget {
           color: kIconoFondo,
           borderRadius: BorderRadius.circular(15),
         ),
-        child: Icon(icon, color: kLima),
+        child: Icon(_iconDataDe(movimiento.icono), color: kLima),
       ),
-      title: Text(title, style: TextStyle(color: kTexto)),
-      subtitle: Text(subtitle, style: TextStyle(color: kMuted)),
+      title: Text(movimiento.titulo, style: TextStyle(color: kTexto)),
+      subtitle: Text(
+        movimiento.subtitulo,
+        style: TextStyle(color: kMuted),
+      ),
       trailing: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Text(
-            amount,
-            style: TextStyle(fontSize: 13, color: isIncome ? kLima : kTexto),
+            formatQuetzales(movimiento.montoFirmadoCentavos),
+            style: TextStyle(
+              fontSize: 13,
+              color: movimiento.esIngreso ? kLima : kTexto,
+            ),
           ),
-          Text(date, style: TextStyle(fontSize: 10, color: kMuted)),
+          Text(movimiento.fecha, style: TextStyle(fontSize: 10, color: kMuted)),
         ],
       ),
     );
+  }
+
+  // Convierte el nombre del icono (guardado como texto) a un IconData.
+  IconData _iconDataDe(String nombre) {
+    return switch (nombre) {
+      'directions_bus' => Icons.directions_bus,
+      'shopping_cart' => Icons.shopping_cart,
+      'arrow_upward' => Icons.arrow_upward,
+      'local_cafe' => Icons.local_cafe,
+      'bolt' => Icons.bolt,
+      'home' => Icons.home,
+      _ => Icons.attach_money,
+    };
   }
 
   Widget tarjetaHero(String title, String body) {
@@ -192,16 +172,5 @@ class HomePage extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  String _formatQuetzales(int centavos) {
-    // La UI convierte los centavos a un texto legible para el usuario.
-    final entero = centavos ~/ 100;
-    final decimales = (centavos % 100).toString().padLeft(2, '0');
-    final miles = entero.toString().replaceAllMapped(
-      RegExp(r'\B(?=(\d{3})+(?!\d))'),
-      (match) => ',',
-    );
-    return 'Q$miles.$decimales';
   }
 }

@@ -1,3 +1,5 @@
+import 'package:inkash/features/home/data/repositories/movimientos_repository.dart';
+import 'package:inkash/features/home/domain/movimiento.dart';
 import 'package:riverpod/riverpod.dart';
 
 // Riverpod sabe cómo construir y entregar el controlador.
@@ -6,24 +8,25 @@ final movimientosControllerProvider = Provider<MovimientosController>((ref) {
 });
 
 class MovimientosController {
-  MovimientosController()
-    : gastosCentavos = const [
-        3800, // Uber
-        28550, // Supermercado
-        6500, // Café
-        42000, // Electricidad
-        289500, // Vivienda y gastos anteriores
-      ];
+  MovimientosController({MovimientosRepository? repository})
+    : _repository = repository ?? MovimientosRepository()
+        {
+    _movimientos = _repository.obtenerMovimientos();
+  }
 
-  // El dinero se guarda como centavos para evitar errores de decimales.
-  final int limiteMensualCentavos = 650000;
+  final MovimientosRepository _repository;
 
-  // Por ahora los datos viven solamente en memoria.
-  final List<int> gastosCentavos;
+  late final List<Movimiento> _movimientos;
 
-  // El total siempre se calcula a partir de la lista.
+  // El límite mensual proviene del repositorio.
+  int get limiteMensualCentavos => _repository.limiteMensualCentavos;
+
+  // Lista de movimientos que la pantalla puede renderizar.
+  List<Movimiento> get movimientos => _movimientos;
+
+  // El total de gastos se deriva de los movimientos mediante el repositorio.
   int get totalGastadoCentavos {
-    return gastosCentavos.fold(0, (total, gasto) => total + gasto);
+    return _repository.calcularTotalGastadoCentavos(_movimientos);
   }
 
   // El saldo se deriva del límite y del total calculado.
