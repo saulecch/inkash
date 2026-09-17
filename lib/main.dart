@@ -2,10 +2,12 @@ import 'package:flutter/widgets.dart';
 import 'package:riverpod/riverpod.dart';
 
 import 'app.dart';
+import 'core/database/app_database.dart';
 import 'features/home/presentation/controllers/home_controller.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await AppDatabase.instance.database;
   runApp(const InkashBootstrap());
 }
 
