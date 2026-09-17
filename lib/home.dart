@@ -3,6 +3,7 @@ import 'package:inkash/core/format/formato_moneda.dart';
 import 'package:inkash/features/home/domain/movimiento.dart';
 import 'package:inkash/features/home/presentation/controllers/home_controller.dart';
 import 'package:inkash/theme.dart';
+import 'package:inkash/features/home/presentation/widgets/movimiento_bottom_sheet.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({required this.controller, super.key});
@@ -86,6 +87,18 @@ class HomePage extends StatelessWidget {
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: 0,
+        onTap: (index) {
+          // Para que funcione solo en el boton de + o agregar.
+          if (index != 2) return;
+          showModalBottomSheet<void>(
+            context: context,
+            isScrollControlled: true,
+            useSafeArea: true,
+            showDragHandle: true,
+            backgroundColor: kSuperficie,
+            builder: (context) => const MovimientoBottomSheet(),
+          );
+        },
         type: BottomNavigationBarType.fixed,
         selectedItemColor: kLima,
         items: const [
@@ -120,10 +133,7 @@ class HomePage extends StatelessWidget {
         child: Icon(_iconDataDe(movimiento.icono), color: kLima),
       ),
       title: Text(movimiento.titulo, style: TextStyle(color: kTexto)),
-      subtitle: Text(
-        movimiento.subtitulo,
-        style: TextStyle(color: kMuted),
-      ),
+      subtitle: Text(movimiento.subtitulo, style: TextStyle(color: kMuted)),
       trailing: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
