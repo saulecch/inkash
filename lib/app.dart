@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:inkash/features/home/presentation/controllers/home_controller.dart';
 import 'package:inkash/home.dart';
 import 'package:inkash/theme.dart';
 
+// Ya no recibe el controlador: cada pantalla lo pide con ref.watch.
 class InkashApp extends StatelessWidget {
-  const InkashApp({required this.controller, super.key});
-
-  final MovimientosController controller;
+  const InkashApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -14,7 +12,7 @@ class InkashApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Inkash',
       theme: buildInkashTheme(),
-      home: HomePage(controller: controller),
+      home: const HomePage(),
     );
   }
 }

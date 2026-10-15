@@ -3,7 +3,7 @@ import 'package:inkash/features/home/domain/movimiento.dart';
 import 'package:inkash/features/home/domain/nuevo_movimiento.dart';
 
 // El repositorio es la frontera entre la presentación y los datos.
-// Oculta la procedencia de los datos (hoy memoria, mañana SQLite).
+// Oculta la procedencia de los datos (hoy SQLite, mañana quizá una API).
 class MovimientosRepository {
   MovimientosRepository({MovimientosLocalDataSource? localDataSource})
     : _localDataSource = localDataSource ?? MovimientosLocalDataSource();
@@ -17,14 +17,8 @@ class MovimientosRepository {
     return _localDataSource.insertar(nuevo);
   }
 
-  List<Movimiento> obtenerMovimientos() {
+  // Ahora es Future: leer de disco toma tiempo y puede fallar.
+  Future<List<Movimiento>> obtenerMovimientos() {
     return _localDataSource.obtenerMovimientos();
-  }
-
-  // Total gastado: suma de los movimientos que son gasto (negativos).
-  int calcularTotalGastadoCentavos(List<Movimiento> movimientos) {
-    return movimientos
-        .where((m) => !m.esIngreso)
-        .fold(0, (total, m) => total + m.montoCentavos);
   }
 }

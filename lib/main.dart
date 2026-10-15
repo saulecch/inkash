@@ -1,45 +1,14 @@
 import 'package:flutter/widgets.dart';
-import 'package:riverpod/riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app.dart';
-import 'core/database/app_database.dart';
-import 'features/home/presentation/controllers/home_controller.dart';
 
-Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await AppDatabase.instance.database;
-  runApp(const InkashBootstrap());
-}
-
-// Este widget es el punto donde se conectan Riverpod y la aplicación.
-class InkashBootstrap extends StatefulWidget {
-  const InkashBootstrap({super.key});
-
-  @override
-  State<InkashBootstrap> createState() => _InkashBootstrapState();
-}
-
-class _InkashBootstrapState extends State<InkashBootstrap> {
-  late final ProviderContainer container;
-
-  @override
-  void initState() {
-    super.initState();
-
-    // El contenedor guarda y administra los providers de Riverpod.
-    container = ProviderContainer();
-  }
-
-  @override
-  void dispose() {
-    // El contenedor se libera junto con el widget que lo creó.
-    container.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // main.dart obtiene el controlador y lo entrega a la aplicación.
-    return InkashApp(controller: container.read(movimientosControllerProvider));
-  }
+void main() {
+  // ProviderScope reemplaza al ProviderContainer manual de S09: crea el
+  // contenedor, lo entrega a todos los widgets y lo libera al cerrar.
+  //
+  // Ya no abrimos la base aquí con await: si fallara, la app no arrancaría.
+  // Ahora la abre el primer provider que la necesita, y un error se ve en
+  // pantalla con un botón "Reintentar".
+  runApp(const ProviderScope(child: InkashApp()));
 }

@@ -1,10 +1,11 @@
 import 'package:inkash/core/database/app_database.dart';
+import 'package:inkash/core/format/formato_fecha.dart';
 import 'package:inkash/features/home/domain/movimiento.dart';
 import 'package:inkash/features/home/domain/nuevo_movimiento.dart';
 import 'package:sqflite/sqflite.dart';
 
 // Fuente de datos local. Es la ÚNICA clase que conoce SQL.
-// s14-01: ya ESCRIBE en SQLite; la lectura sigue en memoria (s14-02 la cambia).
+// s14-02: escribe Y lee de SQLite. Los datos de ejemplo se fueron a test/.
 class MovimientosLocalDataSource {
   // La base se inyecta para poder usar una base temporal en las pruebas.
   MovimientosLocalDataSource({AppDatabase? database})
@@ -47,58 +48,33 @@ class MovimientosLocalDataSource {
     });
   }
 
-  // Datos de ejemplo del dashboard.
-  List<Movimiento> obtenerMovimientos() {
-    return const [
-      Movimiento(
-        id: '1',
-        titulo: 'Uber al trabajo',
-        subtitulo: 'Transporte · Tarjeta',
-        icono: 'directions_bus',
-        montoCentavos: 3800,
-        fecha: 'Hoy',
-      ),
-      Movimiento(
-        id: '2',
-        titulo: 'Súper La Torre',
-        subtitulo: 'Súper y comida · Tarjeta',
-        icono: 'shopping_cart',
-        montoCentavos: 28550,
-        fecha: 'Ayer',
-      ),
-      Movimiento(
-        id: '3',
-        titulo: 'Salario quincena',
-        subtitulo: 'Ingreso · Banco',
-        icono: 'arrow_upward',
-        montoCentavos: 420000,
-        fecha: 'Ayer',
-        esIngreso: true,
-      ),
-      Movimiento(
-        id: '4',
-        titulo: 'Café con Ana',
-        subtitulo: 'Entretenimiento · Efectivo',
-        icono: 'local_cafe',
-        montoCentavos: 6500,
-        fecha: 'Ayer',
-      ),
-      Movimiento(
-        id: '5',
-        titulo: 'Recibo de luz (EEGSA)',
-        subtitulo: 'Servicios · Banco',
-        icono: 'bolt',
-        montoCentavos: 42000,
-        fecha: 'Lun 20',
-      ),
-      Movimiento(
-        id: '6',
-        titulo: 'Vivienda y gastos anteriores',
-        subtitulo: 'Hogar · Banco',
-        icono: 'home',
-        montoCentavos: 289500,
-        fecha: 'Jul 15',
-      ),
-    ];
+  // Lee los movimientos guardados, el más reciente primero.
+  // JOIN: el subtítulo y el icono viven en la tabla `categorias`.
+  Future<List<Movimiento>> obtenerMovimientos({DateTime? ahora}) async {
+    final db = await _database.database;
+    final filas = await db.rawQuery('''
+      SELECT m.id, m.titulo, m.monto_centavos, m.fecha,
+             c.nombre AS categoria, c.icono
+      FROM movimientos m
+      JOIN categorias c ON c.id = m.categoria_id
+      ORDER BY m.fecha DESC, m.id DESC
+    ''');
+    return filas.map((fila) => _aMovimiento(fila, ahora)).toList();
+  }
+
+  // Fila SQL (signo en el monto) -> entidad de dominio (positivo + esIngreso).
+  // Este "mapeo" es justo lo que el repositorio le oculta a la pantalla.
+  Movimiento _aMovimiento(Map<String, Object?> fila, DateTime? ahora) {
+    final montoFirmado = fila['monto_centavos']! as int;
+    final fecha = DateTime.fromMillisecondsSinceEpoch(fila['fecha']! as int);
+    return Movimiento(
+      id: fila['id']! as String,
+      titulo: fila['titulo']! as String,
+      subtitulo: fila['categoria']! as String,
+      icono: fila['icono']! as String,
+      montoCentavos: montoFirmado.abs(),
+      esIngreso: montoFirmado > 0,
+      fecha: etiquetaFecha(fecha, ahora: ahora),
+    );
   }
 }

@@ -80,6 +80,33 @@ void main() {
         {'id': 1, 'nombre': 'Transporte', 'icono': 'directions_bus'},
       ]);
     });
+
+    test(
+      'obtenerMovimientos: más reciente primero y signo -> esIngreso',
+      () async {
+        final dataSource = MovimientosLocalDataSource(database: database);
+        await dataSource.insertar(bus());
+        await dataSource.insertar(
+          NuevoMovimiento(
+            titulo: 'Salario',
+            montoCentavos: 420000,
+            esIngreso: true,
+            categoria: 'Ingreso',
+            fecha: DateTime(2026, 10, 16, 9),
+          ),
+        );
+
+        final movimientos = await dataSource.obtenerMovimientos(
+          ahora: DateTime(2026, 10, 16, 12),
+        );
+
+        expect(movimientos.map((m) => m.titulo), ['Salario', 'Bus demo']);
+        expect(movimientos.first.esIngreso, isTrue);
+        expect(movimientos.last.montoCentavos, 1250); // positivo en el dominio
+        expect(movimientos.last.esIngreso, isFalse);
+        expect(movimientos.map((m) => m.fecha), ['Hoy', 'Ayer']);
+      },
+    );
   });
 
   group('MovimientoBottomSheet', () {
