@@ -1,5 +1,6 @@
 import 'package:inkash/features/home/data/repositories/movimientos_repository.dart';
 import 'package:inkash/features/home/domain/movimiento.dart';
+import 'package:inkash/features/home/domain/nuevo_movimiento.dart';
 import 'package:riverpod/riverpod.dart';
 
 // Riverpod sabe cómo construir y entregar el controlador.
@@ -9,14 +10,18 @@ final movimientosControllerProvider = Provider<MovimientosController>((ref) {
 
 class MovimientosController {
   MovimientosController({MovimientosRepository? repository})
-    : _repository = repository ?? MovimientosRepository()
-        {
+    : _repository = repository ?? MovimientosRepository() {
     _movimientos = _repository.obtenerMovimientos();
   }
 
   final MovimientosRepository _repository;
 
   late final List<Movimiento> _movimientos;
+
+  // El formulario llama a este método; el controlador delega al repositorio.
+  Future<void> guardarMovimiento(NuevoMovimiento nuevo) {
+    return _repository.guardar(nuevo);
+  }
 
   // El límite mensual proviene del repositorio.
   int get limiteMensualCentavos => _repository.limiteMensualCentavos;

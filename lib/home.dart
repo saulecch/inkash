@@ -87,17 +87,25 @@ class HomePage extends StatelessWidget {
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: 0,
-        onTap: (index) {
+        onTap: (index) async {
           // Para que funcione solo en el boton de + o agregar.
           if (index != 2) return;
-          showModalBottomSheet<void>(
+          // El sheet devuelve true con Navigator.pop(true) si guardó.
+          final guardado = await showModalBottomSheet<bool>(
             context: context,
             isScrollControlled: true,
             useSafeArea: true,
             showDragHandle: true,
             backgroundColor: kSuperficie,
-            builder: (context) => const MovimientoBottomSheet(),
+            builder: (context) =>
+                MovimientoBottomSheet(onGuardar: controller.guardarMovimiento),
           );
+          if (guardado != true || !context.mounted) return;
+          // s14-01: ya se escribe en SQLite, pero el dashboard aún lee de
+          // memoria. Por eso el movimiento no aparece en la lista (s14-02).
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Movimiento guardado')));
         },
         type: BottomNavigationBarType.fixed,
         selectedItemColor: kLima,

@@ -2,12 +2,13 @@ import 'package:sqflite/sqflite.dart';
 
 /// Base de datos local compartida en toda la aplicación.
 class AppDatabase {
-  AppDatabase({DatabaseFactory? factory, this.path = 'inkash.db'})
-    : _factory = factory ?? databaseFactory;
+  AppDatabase({this.factory, this.path = 'inkash.db'});
 
   static final AppDatabase instance = AppDatabase();
 
-  final DatabaseFactory _factory;
+  // Se resuelve al ABRIR, no al construir: así crear el datasource en una
+  // prueba de widget no exige tener sqflite inicializado.
+  final DatabaseFactory? factory;
   final String path;
   Future<Database>? _database;
 
@@ -16,7 +17,7 @@ class AppDatabase {
   Future<Database> _open() async {
     try {
       // sqflite encuentra el path a la base de datos.
-      return await _factory.openDatabase(
+      return await (factory ?? databaseFactory).openDatabase(
         path,
         options: OpenDatabaseOptions(
           version: 1,
