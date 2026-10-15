@@ -5,6 +5,7 @@ import 'package:inkash/features/home/domain/movimiento.dart';
 import 'package:inkash/features/home/presentation/controllers/home_controller.dart';
 import 'package:inkash/theme.dart';
 import 'package:inkash/features/home/presentation/widgets/movimiento_bottom_sheet.dart';
+import 'package:inkash/features/tipo_cambio/presentation/tipo_cambio_card.dart';
 
 // ConsumerWidget = StatelessWidget + acceso a `ref`.
 class HomePage extends ConsumerWidget {
@@ -85,6 +86,10 @@ class HomePage extends ConsumerWidget {
             tarjetaHero('Metas de ahorro', '3 activas'),
           ],
         ),
+        const SizedBox(height: 12),
+        // S14-03: dato remoto. Si falla, el resto del dashboard sigue vivo:
+        // cada provider tiene su propio estado de carga y error.
+        const TipoCambioCard(),
         const SizedBox(height: 28),
         Row(
           children: [

@@ -20,7 +20,10 @@ class AppDatabase {
       return await (factory ?? databaseFactory).openDatabase(
         path,
         options: OpenDatabaseOptions(
-          version: 1,
+          // S14-03: versión 2 agrega la tabla cache_tipo_cambio.
+          // Subir la versión es la ÚNICA forma de cambiar el esquema en
+          // teléfonos que ya tienen la app instalada (onCreate no se repite).
+          version: 2,
           // configuración
           onConfigure: (db) async {
             await db.execute('PRAGMA foreign_keys = ON');
@@ -51,6 +54,13 @@ class AppDatabase {
               CREATE INDEX idx_movimientos_categoria_id
               ON movimientos (categoria_id)
             ''');
+            // Instalación nueva: se crea todo, incluido lo de la versión 2.
+            await _crearCacheTipoCambio(db);
+          },
+          // Instalación existente: solo se aplica lo que le falta.
+          // Nunca se borran tablas: se perderían los movimientos del usuario.
+          onUpgrade: (db, oldVersion, newVersion) async {
+            if (oldVersion < 2) await _crearCacheTipoCambio(db);
           },
         ),
       );
@@ -58,6 +68,16 @@ class AppDatabase {
       _database = null;
       rethrow;
     }
+  }
+
+  static Future<void> _crearCacheTipoCambio(Database db) async {
+    await db.execute('''
+      CREATE TABLE cache_tipo_cambio (
+        moneda TEXT NOT NULL PRIMARY KEY,
+        quetzales_diezmilesimas INTEGER NOT NULL,
+        actualizado_ms INTEGER NOT NULL
+      )
+    ''');
   }
 
   Future<void> close() async {

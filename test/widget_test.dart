@@ -7,6 +7,8 @@ import 'package:inkash/app.dart';
 import 'package:inkash/features/home/data/repositories/movimientos_repository.dart';
 import 'package:inkash/features/home/domain/movimiento.dart';
 import 'package:inkash/features/home/presentation/controllers/home_controller.dart';
+import 'package:inkash/features/tipo_cambio/domain/tipo_cambio.dart';
+import 'package:inkash/features/tipo_cambio/presentation/tipo_cambio_provider.dart';
 
 // Los datos de ejemplo de S09 ahora viven aquí: son datos de PRUEBA.
 const movimientosDeEjemplo = [
@@ -74,7 +76,16 @@ class RepositorioFalso extends MovimientosRepository {
 Widget appCon(RepositorioFalso repositorio) {
   return ProviderScope(
     // Override: en esta prueba, el provider entrega el repositorio falso.
-    overrides: [movimientosRepositoryProvider.overrideWithValue(repositorio)],
+    overrides: [
+      movimientosRepositoryProvider.overrideWithValue(repositorio),
+      // La tarjeta del dólar no debe salir a internet en una prueba.
+      tipoCambioProvider.overrideWith(
+        (ref) async => TipoCambio(
+          quetzalesPorDolarDiezmilesimas: 76543,
+          actualizado: DateTime(2026, 10, 15, 8),
+        ),
+      ),
+    ],
     child: const InkashApp(),
   );
 }
@@ -101,6 +112,7 @@ void main() {
 
     expect(find.text('Q2,796.50'), findsOneWidget);
     expect(find.text('Has usado Q3,703.50 de Q6,500.00'), findsOneWidget);
+    expect(find.text('Dólar hoy · Q7.65'), findsOneWidget);
   });
 
   testWidgets('vacío: invita a registrar el primer movimiento', (tester) async {

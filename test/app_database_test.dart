@@ -60,7 +60,7 @@ void main() {
         'nombre': 'Transporte',
       },
     ]);
-    expect(await reopened.getVersion(), 1);
+    expect(await reopened.getVersion(), 2);
   });
 
   test('rechaza categorías inexistentes y protege categorías en uso', () async {
@@ -107,4 +107,31 @@ void main() {
       expect(saldo.single['saldo'], 6200);
     },
   );
+
+  // La prueba más importante de una migración: el usuario que ya tenía la
+  // app (versión 1) actualiza y NO pierde sus movimientos.
+  test('migra de la versión 1 a la 2 sin perder datos', () async {
+    final path = '${directory.path}/v1.db';
+    final v1 = await databaseFactoryFfi.openDatabase(
+      path,
+      options: OpenDatabaseOptions(
+        version: 1,
+        onCreate: (db, _) async {
+          await db.execute(
+            'CREATE TABLE categorias (id INTEGER PRIMARY KEY, nombre TEXT, icono TEXT)',
+          );
+          await db.insert('categorias', {'nombre': 'Hogar', 'icono': 'home'});
+        },
+      ),
+    );
+    await v1.close();
+
+    final actualizada = AppDatabase(factory: databaseFactoryFfi, path: path);
+    final db = await actualizada.database;
+
+    expect(await db.getVersion(), 2);
+    expect(await db.query('categorias'), hasLength(1));
+    expect(await db.query('cache_tipo_cambio'), isEmpty);
+    await actualizada.close();
+  });
 }
