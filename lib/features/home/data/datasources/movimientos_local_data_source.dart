@@ -2,6 +2,7 @@ import 'package:inkash/core/database/app_database.dart';
 import 'package:inkash/core/format/formato_fecha.dart';
 import 'package:inkash/features/home/domain/movimiento.dart';
 import 'package:inkash/features/home/domain/nuevo_movimiento.dart';
+import 'package:inkash/features/home/domain/totales_mes.dart';
 import 'package:sqflite/sqflite.dart';
 
 // Fuente de datos local. Es la ÚNICA clase que conoce SQL.
@@ -50,16 +51,50 @@ class MovimientosLocalDataSource {
 
   // Lee los movimientos guardados, el más reciente primero.
   // JOIN: el subtítulo y el icono viven en la tabla `categorias`.
-  Future<List<Movimiento>> obtenerMovimientos({DateTime? ahora}) async {
+  // s15-02: `limite` opcional. El Inicio solo pide los últimos 5.
+  Future<List<Movimiento>> obtenerMovimientos({
+    int? limite,
+    DateTime? ahora,
+  }) async {
     final db = await _database.database;
-    final filas = await db.rawQuery('''
+    final filas = await db.rawQuery(
+      '''
       SELECT m.id, m.titulo, m.monto_centavos, m.fecha,
              c.nombre AS categoria, c.icono
       FROM movimientos m
       JOIN categorias c ON c.id = m.categoria_id
       ORDER BY m.fecha DESC, m.id DESC
-    ''');
+      ${limite == null ? '' : 'LIMIT ?'}
+    ''',
+      [?limite], // ?limite: solo agrega el argumento si no es null.
+    );
     return filas.map((fila) => _aMovimiento(fila, ahora)).toList();
+  }
+
+  // s15-02: totales del mes calculados por SQLite con SUM.
+  // Sumar en SQL no trae miles de filas a memoria solo para sumarlas.
+  // CASE separa gastos (negativos) de ingresos (positivos) en UNA consulta.
+  Future<TotalesMes> totalesDelMes(DateTime mes) async {
+    final db = await _database.database;
+    final fila = (await db.rawQuery(
+      '''
+      SELECT
+        COALESCE(SUM(CASE WHEN monto_centavos < 0 THEN -monto_centavos END), 0)
+          AS gastos,
+        COALESCE(SUM(CASE WHEN monto_centavos > 0 THEN monto_centavos END), 0)
+          AS ingresos
+      FROM movimientos
+      WHERE fecha >= ? AND fecha < ?
+      ''',
+      [
+        inicioDeMes(mes).millisecondsSinceEpoch,
+        inicioMesSiguiente(mes).millisecondsSinceEpoch,
+      ],
+    )).single;
+    return TotalesMes(
+      gastosCentavos: fila['gastos']! as int,
+      ingresosCentavos: fila['ingresos']! as int,
+    );
   }
 
   // Fila SQL (signo en el monto) -> entidad de dominio (positivo + esIngreso).

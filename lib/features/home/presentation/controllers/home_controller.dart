@@ -1,7 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:inkash/core/reloj.dart';
 import 'package:inkash/features/home/data/repositories/movimientos_repository.dart';
 import 'package:inkash/features/home/domain/movimiento.dart';
 import 'package:inkash/features/home/domain/nuevo_movimiento.dart';
+import 'package:inkash/features/home/domain/totales_mes.dart';
 
 // El repositorio también es un provider: en las pruebas se reemplaza por uno
 // falso con `overrideWithValue`, sin tocar SQLite.
@@ -20,19 +22,22 @@ final homeControllerProvider =
     );
 
 // Lo que el dashboard necesita, ya calculado. Inmutable.
+// s15-02: los totales son DEL MES y vienen sumados de SQLite. Antes se
+// sumaba la lista en Dart, que además incluía todos los meses.
 class ResumenHome {
   const ResumenHome({
-    required this.movimientos,
+    required this.mes,
+    required this.ultimosMovimientos,
+    required this.totalesMes,
     required this.limiteMensualCentavos,
   });
 
-  final List<Movimiento> movimientos;
+  final DateTime mes;
+  final List<Movimiento> ultimosMovimientos;
+  final TotalesMes totalesMes;
   final int limiteMensualCentavos;
 
-  // Total gastado: suma de los movimientos que son gasto.
-  int get totalGastadoCentavos => movimientos
-      .where((m) => !m.esIngreso)
-      .fold(0, (total, m) => total + m.montoCentavos);
+  int get totalGastadoCentavos => totalesMes.gastosCentavos;
 
   // El saldo se deriva del límite y del total calculado.
   int get saldoDisponibleCentavos =>
@@ -45,11 +50,21 @@ class HomeController extends AsyncNotifier<ResumenHome> {
 
   // build() corre la primera vez que alguien hace ref.watch y cada vez que
   // se invalida. Mientras el Future no termina, el estado es AsyncLoading.
+  static const cantidadUltimos = 5;
+
   @override
   Future<ResumenHome> build() async {
-    final movimientos = await _repository.obtenerMovimientos();
+    final hoy = ref.read(relojProvider)();
+    // Dos consultas independientes EN PARALELO: (a, b).wait espera ambas.
+    // Si una falla, el build falla y la pantalla muestra el error.
+    final (ultimos, totales) = await (
+      _repository.obtenerMovimientos(limite: cantidadUltimos),
+      _repository.totalesDelMes(hoy),
+    ).wait;
     return ResumenHome(
-      movimientos: movimientos,
+      mes: hoy,
+      ultimosMovimientos: ultimos,
+      totalesMes: totales,
       limiteMensualCentavos: _repository.limiteMensualCentavos,
     );
   }

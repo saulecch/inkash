@@ -5,7 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:inkash/app.dart';
 import 'package:inkash/features/home/data/repositories/movimientos_repository.dart';
+import 'package:inkash/core/reloj.dart';
 import 'package:inkash/features/home/domain/movimiento.dart';
+import 'package:inkash/features/home/domain/totales_mes.dart';
 import 'package:inkash/features/home/presentation/controllers/home_controller.dart';
 import 'package:inkash/features/tipo_cambio/domain/tipo_cambio.dart';
 import 'package:inkash/features/tipo_cambio/presentation/tipo_cambio_provider.dart';
@@ -70,7 +72,23 @@ class RepositorioFalso extends MovimientosRepository {
   Future<List<Movimiento>> Function() respuesta;
 
   @override
-  Future<List<Movimiento>> obtenerMovimientos() => respuesta();
+  Future<List<Movimiento>> obtenerMovimientos({int? limite}) async {
+    final todos = await respuesta();
+    return limite == null ? todos : todos.take(limite).toList();
+  }
+
+  // En el falso sumamos en Dart; en el real lo hace SQLite (ver test de SQL).
+  @override
+  Future<TotalesMes> totalesDelMes(DateTime mes) async {
+    final todos = await respuesta();
+    int suma(bool ingreso) => todos
+        .where((m) => m.esIngreso == ingreso)
+        .fold(0, (t, m) => t + m.montoCentavos);
+    return TotalesMes(
+      gastosCentavos: suma(false),
+      ingresosCentavos: suma(true),
+    );
+  }
 }
 
 Widget appCon(RepositorioFalso repositorio) {
@@ -78,6 +96,8 @@ Widget appCon(RepositorioFalso repositorio) {
     // Override: en esta prueba, el provider entrega el repositorio falso.
     overrides: [
       movimientosRepositoryProvider.overrideWithValue(repositorio),
+      // Reloj fijo: la prueba dice "Octubre 2026" hoy y dentro de un año.
+      relojProvider.overrideWithValue(() => DateTime(2026, 10, 15, 9)),
       // La tarjeta del dólar no debe salir a internet en una prueba.
       tipoCambioProvider.overrideWith(
         (ref) async => TipoCambio(
@@ -91,12 +111,16 @@ Widget appCon(RepositorioFalso repositorio) {
 }
 
 void main() {
-  test('ResumenHome suma los gastos y calcula el saldo disponible', () {
-    const resumen = ResumenHome(
-      movimientos: movimientosDeEjemplo,
+  test('ResumenHome calcula el saldo con el total del mes', () {
+    final resumen = ResumenHome(
+      mes: DateTime(2026, 10),
+      ultimosMovimientos: const [],
+      totalesMes: const TotalesMes(
+        gastosCentavos: 370350,
+        ingresosCentavos: 420000,
+      ),
       limiteMensualCentavos: 650000,
     );
-    expect(resumen.totalGastadoCentavos, 370350);
     expect(resumen.saldoDisponibleCentavos, 279650);
   });
 
@@ -113,6 +137,9 @@ void main() {
     expect(find.text('Q2,796.50'), findsOneWidget);
     expect(find.text('Has usado Q3,703.50 de Q6,500.00'), findsOneWidget);
     expect(find.text('Dólar hoy · Q7.65'), findsOneWidget);
+    expect(find.text('Octubre 2026'), findsOneWidget);
+    // Solo los últimos 5 de 6 en el Inicio.
+    expect(find.text('Vivienda'), findsNothing);
   });
 
   testWidgets('vacío: invita a registrar el primer movimiento', (tester) async {

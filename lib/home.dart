@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:inkash/core/format/formato_fecha.dart';
 import 'package:inkash/core/format/formato_moneda.dart';
 import 'package:inkash/features/home/domain/movimiento.dart';
 import 'package:inkash/features/home/presentation/controllers/home_controller.dart';
@@ -33,7 +34,7 @@ class HomePage extends ConsumerWidget {
   Widget _dashboard(ResumenHome resumen, WidgetRef ref) {
     final totalGastado = resumen.totalGastadoCentavos;
     final saldoDisponible = resumen.saldoDisponibleCentavos;
-    final movimientos = resumen.movimientos;
+    final movimientos = resumen.ultimosMovimientos;
 
     return ListView(
       padding: EdgeInsets.all(16.0),
@@ -42,7 +43,8 @@ class HomePage extends ConsumerWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text('Hola, Kevin'),
-            Text('Julio 2026', style: TextStyle(color: kMuted)),
+            // s15-02: el mes real, no 'Julio 2026' escrito a mano.
+            Text(nombreMes(resumen.mes), style: TextStyle(color: kMuted)),
           ],
         ),
         const SizedBox(height: 22),

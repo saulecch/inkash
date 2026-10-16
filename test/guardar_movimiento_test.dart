@@ -81,6 +81,36 @@ void main() {
       ]);
     });
 
+    test('totalesDelMes suma con SQL solo el mes pedido', () async {
+      final dataSource = MovimientosLocalDataSource(database: database);
+      NuevoMovimiento mov(int centavos, bool ingreso, DateTime fecha) =>
+          NuevoMovimiento(
+            titulo: 'x',
+            montoCentavos: centavos,
+            esIngreso: ingreso,
+            categoria: 'Hogar',
+            fecha: fecha,
+          );
+      await dataSource.insertar(mov(1000, false, DateTime(2026, 10, 1)));
+      await dataSource.insertar(
+        mov(2550, false, DateTime(2026, 10, 31, 23, 59)),
+      );
+      await dataSource.insertar(mov(50000, true, DateTime(2026, 10, 15)));
+      // Bordes: el 30 de sept y el 1 de nov NO son de octubre.
+      await dataSource.insertar(
+        mov(9999, false, DateTime(2026, 9, 30, 23, 59)),
+      );
+      await dataSource.insertar(mov(9999, false, DateTime(2026, 11, 1)));
+
+      final octubre = await dataSource.totalesDelMes(DateTime(2026, 10, 20));
+      expect(octubre.gastosCentavos, 3550);
+      expect(octubre.ingresosCentavos, 50000);
+
+      final vacio = await dataSource.totalesDelMes(DateTime(2026, 1));
+      expect(vacio.gastosCentavos, 0); // COALESCE: 0, no null
+      expect(await dataSource.obtenerMovimientos(limite: 2), hasLength(2));
+    });
+
     test(
       'obtenerMovimientos: más reciente primero y signo -> esIngreso',
       () async {
