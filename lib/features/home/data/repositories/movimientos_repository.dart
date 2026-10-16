@@ -19,8 +19,20 @@ class MovimientosRepository {
   }
 
   // Ahora es Future: leer de disco toma tiempo y puede fallar.
-  Future<List<Movimiento>> obtenerMovimientos({int? limite}) {
-    return _localDataSource.obtenerMovimientos(limite: limite);
+  Future<List<Movimiento>> obtenerMovimientos({
+    int? limite,
+    DateTime? mes,
+    String? categoria,
+  }) {
+    return _localDataSource.obtenerMovimientos(
+      limite: limite,
+      mes: mes,
+      categoria: categoria,
+    );
+  }
+
+  Future<List<String>> obtenerCategoriasUsadas() {
+    return _localDataSource.obtenerCategoriasUsadas();
   }
 
   Future<TotalesMes> totalesDelMes(DateTime mes) {

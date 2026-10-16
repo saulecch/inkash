@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:inkash/core/reloj.dart';
+import 'package:inkash/features/historial/historial_controller.dart';
 import 'package:inkash/features/home/data/repositories/movimientos_repository.dart';
 import 'package:inkash/features/home/domain/movimiento.dart';
 import 'package:inkash/features/home/domain/nuevo_movimiento.dart';
@@ -76,6 +77,10 @@ class HomeController extends AsyncNotifier<ResumenHome> {
     // Volvemos a consultar SQLite en vez de hacer lista.add(...): la base es
     // la única fuente de verdad (orden, ids y totales salen de ahí).
     ref.invalidateSelf();
+    // s15-03: el Historial también muestra movimientos. Si no lo invalidamos,
+    // seguiría con la lista vieja (y quizá sin la categoría nueva).
+    ref.invalidate(historialProvider);
+    ref.invalidate(categoriasUsadasProvider);
     await future;
   }
 }

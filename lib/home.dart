@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:inkash/core/format/formato_fecha.dart';
 import 'package:inkash/core/format/formato_moneda.dart';
-import 'package:inkash/features/home/domain/movimiento.dart';
 import 'package:inkash/features/home/presentation/controllers/home_controller.dart';
+import 'package:inkash/features/home/presentation/widgets/movimiento_tile.dart';
 import 'package:inkash/features/navegacion/navegacion_controller.dart';
 import 'package:inkash/features/tipo_cambio/presentation/tipo_cambio_card.dart';
 import 'package:inkash/theme.dart';
@@ -116,52 +116,10 @@ class HomePage extends ConsumerWidget {
               style: TextStyle(color: kMuted),
             ),
           ),
-        ...movimientos.map(filaMovimiento),
+        for (final movimiento in movimientos)
+          MovimientoTile(movimiento: movimiento),
       ],
     );
-  }
-
-  Widget filaMovimiento(Movimiento movimiento) {
-    return ListTile(
-      leading: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: kIconoFondo,
-          borderRadius: BorderRadius.circular(15),
-        ),
-        child: Icon(_iconDataDe(movimiento.icono), color: kLima),
-      ),
-      title: Text(movimiento.titulo, style: TextStyle(color: kTexto)),
-      subtitle: Text(movimiento.subtitulo, style: TextStyle(color: kMuted)),
-      trailing: Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Text(
-            formatQuetzales(movimiento.montoFirmadoCentavos),
-            style: TextStyle(
-              fontSize: 13,
-              color: movimiento.esIngreso ? kLima : kTexto,
-            ),
-          ),
-          Text(movimiento.fecha, style: TextStyle(fontSize: 10, color: kMuted)),
-        ],
-      ),
-    );
-  }
-
-  // Convierte el nombre del icono (guardado como texto) a un IconData.
-  IconData _iconDataDe(String nombre) {
-    return switch (nombre) {
-      'directions_bus' => Icons.directions_bus,
-      'shopping_cart' => Icons.shopping_cart,
-      'arrow_upward' => Icons.arrow_upward,
-      'local_cafe' => Icons.local_cafe,
-      'movie' => Icons.movie_outlined,
-      'bolt' => Icons.bolt,
-      'home' => Icons.home,
-      _ => Icons.attach_money,
-    };
   }
 
   Widget tarjetaHero(String title, String body) {

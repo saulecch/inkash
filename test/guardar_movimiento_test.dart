@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:inkash/core/database/app_database.dart';
 import 'package:inkash/core/format/parse_monto.dart';
 import 'package:inkash/features/home/data/datasources/movimientos_local_data_source.dart';
+import 'package:inkash/features/home/domain/movimiento.dart';
 import 'package:inkash/features/home/domain/nuevo_movimiento.dart';
 import 'package:inkash/features/home/presentation/widgets/movimiento_bottom_sheet.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -78,6 +79,46 @@ void main() {
       final categorias = await db.query('categorias');
       expect(categorias, [
         {'id': 1, 'nombre': 'Transporte', 'icono': 'directions_bus'},
+      ]);
+    });
+
+    test('obtenerMovimientos filtra por mes y categoría', () async {
+      final dataSource = MovimientosLocalDataSource(database: database);
+      Future<void> mov(String titulo, String categoria, DateTime fecha) =>
+          dataSource.insertar(
+            NuevoMovimiento(
+              titulo: titulo,
+              montoCentavos: 100,
+              esIngreso: false,
+              categoria: categoria,
+              fecha: fecha,
+            ),
+          );
+      await mov('Bus', 'Transporte', DateTime(2026, 10, 2));
+      await mov('Súper', 'Súper y comida', DateTime(2026, 10, 3));
+      await mov('Bus sept', 'Transporte', DateTime(2026, 9, 28));
+
+      List<String> titulos(List<Movimiento> l) => [for (final m in l) m.titulo];
+      expect(
+        titulos(await dataSource.obtenerMovimientos(mes: DateTime(2026, 10))),
+        ['Súper', 'Bus'],
+      );
+      expect(
+        titulos(await dataSource.obtenerMovimientos(categoria: 'Transporte')),
+        ['Bus', 'Bus sept'],
+      );
+      expect(
+        titulos(
+          await dataSource.obtenerMovimientos(
+            mes: DateTime(2026, 9),
+            categoria: 'Transporte',
+          ),
+        ),
+        ['Bus sept'],
+      );
+      expect(await dataSource.obtenerCategoriasUsadas(), [
+        'Súper y comida',
+        'Transporte',
       ]);
     });
 

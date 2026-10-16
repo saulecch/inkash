@@ -52,23 +52,52 @@ class MovimientosLocalDataSource {
   // Lee los movimientos guardados, el más reciente primero.
   // JOIN: el subtítulo y el icono viven en la tabla `categorias`.
   // s15-02: `limite` opcional. El Inicio solo pide los últimos 5.
+  // s15-03: filtros opcionales por mes y categoría para el Historial.
+  // El WHERE se arma con piezas, pero los VALORES siempre van como `?`.
   Future<List<Movimiento>> obtenerMovimientos({
     int? limite,
+    DateTime? mes,
+    String? categoria,
     DateTime? ahora,
   }) async {
+    final condiciones = <String>[];
+    final argumentos = <Object>[];
+    if (mes != null) {
+      condiciones.add('m.fecha >= ? AND m.fecha < ?');
+      argumentos.addAll([
+        inicioDeMes(mes).millisecondsSinceEpoch,
+        inicioMesSiguiente(mes).millisecondsSinceEpoch,
+      ]);
+    }
+    if (categoria != null) {
+      condiciones.add('c.nombre = ?');
+      argumentos.add(categoria);
+    }
+    if (limite != null) argumentos.add(limite);
+
     final db = await _database.database;
-    final filas = await db.rawQuery(
-      '''
+    final filas = await db.rawQuery('''
       SELECT m.id, m.titulo, m.monto_centavos, m.fecha,
              c.nombre AS categoria, c.icono
       FROM movimientos m
       JOIN categorias c ON c.id = m.categoria_id
+      ${condiciones.isEmpty ? '' : 'WHERE ${condiciones.join(' AND ')}'}
       ORDER BY m.fecha DESC, m.id DESC
       ${limite == null ? '' : 'LIMIT ?'}
-    ''',
-      [?limite], // ?limite: solo agrega el argumento si no es null.
-    );
+    ''', argumentos);
     return filas.map((fila) => _aMovimiento(fila, ahora)).toList();
+  }
+
+  // Categorías que ya tienen movimientos: los chips del filtro del Historial.
+  Future<List<String>> obtenerCategoriasUsadas() async {
+    final db = await _database.database;
+    final filas = await db.rawQuery('''
+      SELECT DISTINCT c.nombre
+      FROM categorias c
+      JOIN movimientos m ON m.categoria_id = c.id
+      ORDER BY c.nombre
+    ''');
+    return [for (final fila in filas) fila['nombre']! as String];
   }
 
   // s15-02: totales del mes calculados por SQLite con SUM.
@@ -110,6 +139,7 @@ class MovimientosLocalDataSource {
       montoCentavos: montoFirmado.abs(),
       esIngreso: montoFirmado > 0,
       fecha: etiquetaFecha(fecha, ahora: ahora),
+      fechaHora: fecha,
     );
   }
 }

@@ -7,6 +7,7 @@ class Movimiento {
     required this.icono,
     required this.montoCentavos,
     required this.fecha,
+    required this.fechaHora,
     this.esIngreso = false,
   });
 
@@ -14,7 +15,10 @@ class Movimiento {
   final String titulo;
   final String subtitulo;
   final String icono;
+  // `fecha` es la etiqueta corta ('Hoy', 'Ayer'); `fechaHora` el instante
+  // real. s15-03: el Historial agrupa por día, así que necesita el instante.
   final String fecha;
+  final DateTime fechaHora;
   final bool esIngreso;
 
   // El monto se guarda en centavos (entero) para evitar errores de decimales.
