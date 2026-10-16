@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:inkash/core/format/formato_moneda.dart';
 import 'package:inkash/features/home/domain/movimiento.dart';
 import 'package:inkash/features/home/presentation/controllers/home_controller.dart';
-import 'package:inkash/theme.dart';
-import 'package:inkash/features/home/presentation/widgets/movimiento_bottom_sheet.dart';
+import 'package:inkash/features/navegacion/navegacion_controller.dart';
 import 'package:inkash/features/tipo_cambio/presentation/tipo_cambio_card.dart';
+import 'package:inkash/theme.dart';
 
 // ConsumerWidget = StatelessWidget + acceso a `ref`.
 class HomePage extends ConsumerWidget {
@@ -16,23 +16,21 @@ class HomePage extends ConsumerWidget {
     // watch: cuando el estado cambie, este build se vuelve a ejecutar.
     final resumen = ref.watch(homeControllerProvider);
 
-    return Scaffold(
-      body: SafeArea(
-        // Los estados de una consulta asíncrona, explícitos y sin if anidados.
-        // Al recargar (tras guardar) se siguen viendo los datos anteriores.
-        child: resumen.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, _) => _ErrorCarga(
-            onReintentar: () => ref.invalidate(homeControllerProvider),
-          ),
-          data: (resumen) => _dashboard(resumen),
+    // s15-01: ya no es un Scaffold. La barra inferior vive en InkashShell.
+    return SafeArea(
+      // Los estados de una consulta asíncrona, explícitos y sin if anidados.
+      // Al recargar (tras guardar) se siguen viendo los datos anteriores.
+      child: resumen.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, _) => _ErrorCarga(
+          onReintentar: () => ref.invalidate(homeControllerProvider),
         ),
+        data: (resumen) => _dashboard(resumen, ref),
       ),
-      bottomNavigationBar: _barraInferior(context, ref),
     );
   }
 
-  Widget _dashboard(ResumenHome resumen) {
+  Widget _dashboard(ResumenHome resumen, WidgetRef ref) {
     final totalGastado = resumen.totalGastadoCentavos;
     final saldoDisponible = resumen.saldoDisponibleCentavos;
     final movimientos = resumen.movimientos;
@@ -96,7 +94,9 @@ class HomePage extends ConsumerWidget {
             Text('Últimos movimientos', style: TextStyle(fontSize: 20)),
             Spacer(),
             TextButton(
-              onPressed: () {},
+              // Navegar = cambiar el estado de la pestaña activa.
+              onPressed: () =>
+                  ref.read(navegacionProvider.notifier).ir(Pestana.historial),
               child: Text(
                 'Ver todo',
                 style: TextStyle(fontSize: 13, color: kLima),
@@ -115,51 +115,6 @@ class HomePage extends ConsumerWidget {
             ),
           ),
         ...movimientos.map(filaMovimiento),
-      ],
-    );
-  }
-
-  Widget _barraInferior(BuildContext context, WidgetRef ref) {
-    return BottomNavigationBar(
-      currentIndex: 0,
-      onTap: (index) async {
-        // Para que funcione solo en el boton de + o agregar.
-        if (index != 2) return;
-        // El sheet devuelve true con Navigator.pop(true) si guardó.
-        final guardado = await showModalBottomSheet<bool>(
-          context: context,
-          isScrollControlled: true,
-          useSafeArea: true,
-          showDragHandle: true,
-          backgroundColor: kSuperficie,
-          // read (no watch): en un callback solo queremos llamar un método.
-          builder: (context) => MovimientoBottomSheet(
-            onGuardar: ref
-                .read(homeControllerProvider.notifier)
-                .guardarMovimiento,
-          ),
-        );
-        if (guardado != true || !context.mounted) return;
-        // s14-02: el controlador ya recargó desde SQLite; la lista se
-        // actualiza sola porque HomePage hace ref.watch.
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Movimiento guardado')));
-      },
-      type: BottomNavigationBarType.fixed,
-      selectedItemColor: kLima,
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Inicio'),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.bar_chart),
-          label: 'Presupuesto',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.add_circle, size: 34),
-          label: 'Agregar',
-        ),
-        BottomNavigationBarItem(icon: Icon(Icons.list_alt), label: 'Historial'),
-        BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Ajustes'),
       ],
     );
   }

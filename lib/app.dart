@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:inkash/home.dart';
+import 'package:inkash/shell.dart';
 import 'package:inkash/theme.dart';
 
 // Ya no recibe el controlador: cada pantalla lo pide con ref.watch.
+// s15-01: la pantalla raíz es el cascarón con las pestañas.
 class InkashApp extends StatelessWidget {
   const InkashApp({super.key});
 
@@ -12,7 +13,7 @@ class InkashApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Inkash',
       theme: buildInkashTheme(),
-      home: const HomePage(),
+      home: const InkashShell(),
     );
   }
 }

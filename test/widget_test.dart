@@ -138,4 +138,29 @@ void main() {
 
     expect(find.text('Q2,796.50'), findsOneWidget);
   });
+
+  testWidgets(
+    'la barra inferior cambia de pestaña y "Ver todo" abre Historial',
+    (tester) async {
+      await tester.pumpWidget(
+        appCon(RepositorioFalso(() async => movimientosDeEjemplo)),
+      );
+      await tester.pumpAndSettle();
+
+      // IndexedStack: las pestañas ocultas existen pero están "offstage",
+      // y find las ignora por defecto.
+      expect(find.text('Próximamente'), findsNothing);
+
+      await tester.tap(find.text('Ajustes'));
+      await tester.pumpAndSettle();
+      expect(find.text('Próximamente'), findsOneWidget);
+
+      await tester.tap(find.text('Inicio'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Ver todo'));
+      await tester.pumpAndSettle();
+      expect(find.widgetWithText(Column, 'Historial'), findsWidgets);
+      expect(find.text('Próximamente'), findsOneWidget);
+    },
+  );
 }
