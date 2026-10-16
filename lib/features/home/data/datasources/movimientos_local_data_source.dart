@@ -1,6 +1,7 @@
 import 'package:inkash/core/database/app_database.dart';
 import 'package:inkash/core/format/formato_fecha.dart';
 import 'package:inkash/features/home/domain/movimiento.dart';
+import 'package:inkash/features/home/domain/movimiento_eliminado.dart';
 import 'package:inkash/features/home/domain/nuevo_movimiento.dart';
 import 'package:inkash/features/home/domain/totales_mes.dart';
 import 'package:sqflite/sqflite.dart';
@@ -86,6 +87,27 @@ class MovimientosLocalDataSource {
       ${limite == null ? '' : 'LIMIT ?'}
     ''', argumentos);
     return filas.map((fila) => _aMovimiento(fila, ahora)).toList();
+  }
+
+  // s15-04: borrar devuelve la fila borrada, para poder deshacer.
+  // Leer + borrar en una transacción: nadie cambia la fila en medio.
+  Future<MovimientoEliminado?> eliminar(String id) async {
+    final db = await _database.database;
+    return db.transaction((txn) async {
+      final filas = await txn.query(
+        'movimientos',
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+      if (filas.isEmpty) return null; // ya no existía: nada que deshacer
+      await txn.delete('movimientos', where: 'id = ?', whereArgs: [id]);
+      return MovimientoEliminado(Map.of(filas.single));
+    });
+  }
+
+  Future<void> restaurar(MovimientoEliminado eliminado) async {
+    final db = await _database.database;
+    await db.insert('movimientos', eliminado.fila);
   }
 
   // Categorías que ya tienen movimientos: los chips del filtro del Historial.

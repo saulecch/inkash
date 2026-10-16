@@ -3,6 +3,7 @@ import 'package:inkash/core/reloj.dart';
 import 'package:inkash/features/historial/historial_controller.dart';
 import 'package:inkash/features/home/data/repositories/movimientos_repository.dart';
 import 'package:inkash/features/home/domain/movimiento.dart';
+import 'package:inkash/features/home/domain/movimiento_eliminado.dart';
 import 'package:inkash/features/home/domain/nuevo_movimiento.dart';
 import 'package:inkash/features/home/domain/totales_mes.dart';
 
@@ -74,11 +75,28 @@ class HomeController extends AsyncNotifier<ResumenHome> {
   // y NO se recarga nada.
   Future<void> guardarMovimiento(NuevoMovimiento nuevo) async {
     await _repository.guardar(nuevo);
-    // Volvemos a consultar SQLite en vez de hacer lista.add(...): la base es
-    // la única fuente de verdad (orden, ids y totales salen de ahí).
+    await _refrescarTodo();
+  }
+
+  // s15-04: borrar y deshacer siguen la misma regla que guardar:
+  // escribir en SQLite y volver a consultar todo lo que depende de eso.
+  Future<MovimientoEliminado?> eliminar(String id) async {
+    final eliminado = await _repository.eliminar(id);
+    await _refrescarTodo();
+    return eliminado;
+  }
+
+  Future<void> deshacer(MovimientoEliminado eliminado) async {
+    await _repository.restaurar(eliminado);
+    await _refrescarTodo();
+  }
+
+  // Volvemos a consultar SQLite en vez de hacer lista.add(...): la base es
+  // la única fuente de verdad (orden, ids y totales salen de ahí).
+  // El Historial también muestra movimientos: si no lo invalidamos,
+  // seguiría con la lista vieja (y quizá sin la categoría nueva).
+  Future<void> _refrescarTodo() async {
     ref.invalidateSelf();
-    // s15-03: el Historial también muestra movimientos. Si no lo invalidamos,
-    // seguiría con la lista vieja (y quizá sin la categoría nueva).
     ref.invalidate(historialProvider);
     ref.invalidate(categoriasUsadasProvider);
     await future;

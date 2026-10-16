@@ -82,6 +82,21 @@ void main() {
       ]);
     });
 
+    test('eliminar devuelve la fila y restaurar la deja idéntica', () async {
+      final dataSource = MovimientosLocalDataSource(database: database);
+      await dataSource.insertar(bus());
+      final db = await database.database;
+      final antes = (await db.query('movimientos')).single;
+
+      final eliminado = await dataSource.eliminar(antes['id']! as String);
+      expect(await db.query('movimientos'), isEmpty);
+      expect(await dataSource.eliminar('no-existe'), isNull);
+
+      await dataSource.restaurar(eliminado!);
+      // Mismo id, categoría, fecha y monto: es EL mismo registro.
+      expect((await db.query('movimientos')).single, antes);
+    });
+
     test('obtenerMovimientos filtra por mes y categoría', () async {
       final dataSource = MovimientosLocalDataSource(database: database);
       Future<void> mov(String titulo, String categoria, DateTime fecha) =>

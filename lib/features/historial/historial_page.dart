@@ -4,6 +4,7 @@ import 'package:inkash/core/format/formato_fecha.dart';
 import 'package:inkash/core/format/formato_moneda.dart';
 import 'package:inkash/features/historial/historial_controller.dart';
 import 'package:inkash/features/home/domain/movimiento.dart';
+import 'package:inkash/features/home/presentation/controllers/home_controller.dart';
 import 'package:inkash/features/home/presentation/widgets/movimiento_tile.dart';
 import 'package:inkash/theme.dart';
 
@@ -153,8 +154,57 @@ class _ListaAgrupada extends StatelessWidget {
         );
         diaAnterior = dia;
       }
-      filas.add(MovimientoTile(movimiento: m));
+      filas.add(_Deslizable(movimiento: m));
     }
     return ListView(children: filas);
+  }
+}
+
+// s15-04: deslizar a la izquierda para borrar, con "Deshacer".
+class _Deslizable extends ConsumerWidget {
+  const _Deslizable({required this.movimiento});
+
+  final Movimiento movimiento;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Dismissible(
+      // La key debe ser el id: si fuera el índice, Flutter confundiría filas.
+      key: ValueKey(movimiento.id),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 24),
+        color: kPeligro.withValues(alpha: .25),
+        child: const Icon(Icons.delete_outline, color: kPeligro),
+      ),
+      // confirmDismiss: primero borramos en SQLite. Si falla, devolvemos
+      // false y la fila regresa a su lugar (no "desaparece" en falso).
+      confirmDismiss: (_) async {
+        final messenger = ScaffoldMessenger.of(context);
+        final controller = ref.read(homeControllerProvider.notifier);
+        try {
+          final eliminado = await controller.eliminar(movimiento.id);
+          messenger.showSnackBar(
+            SnackBar(
+              content: Text('"${movimiento.titulo}" eliminado'),
+              action: eliminado == null
+                  ? null
+                  : SnackBarAction(
+                      label: 'Deshacer',
+                      onPressed: () => controller.deshacer(eliminado),
+                    ),
+            ),
+          );
+          return true;
+        } catch (_) {
+          messenger.showSnackBar(
+            const SnackBar(content: Text('No se pudo eliminar.')),
+          );
+          return false;
+        }
+      },
+      child: MovimientoTile(movimiento: movimiento),
+    );
   }
 }

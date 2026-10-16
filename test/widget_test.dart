@@ -7,6 +7,7 @@ import 'package:inkash/app.dart';
 import 'package:inkash/core/reloj.dart';
 import 'package:inkash/features/home/data/repositories/movimientos_repository.dart';
 import 'package:inkash/features/home/domain/movimiento.dart';
+import 'package:inkash/features/home/domain/movimiento_eliminado.dart';
 import 'package:inkash/features/home/domain/totales_mes.dart';
 import 'package:inkash/features/home/presentation/controllers/home_controller.dart';
 import 'package:inkash/features/tipo_cambio/domain/tipo_cambio.dart';
@@ -115,6 +116,24 @@ class RepositorioFalso extends MovimientosRepository {
       lista = lista.where((m) => m.subtitulo == categoria).toList();
     }
     return limite == null ? lista : lista.take(limite).toList();
+  }
+
+  // Borrar/restaurar sobre la lista en memoria (solo si la prueba la usa).
+  List<Movimiento>? datos;
+  final _borrados = <String, Movimiento>{};
+
+  @override
+  Future<MovimientoEliminado?> eliminar(String id) async {
+    final m = datos!.firstWhere((m) => m.id == id);
+    datos!.remove(m);
+    _borrados[id] = m;
+    return MovimientoEliminado({'id': id});
+  }
+
+  @override
+  Future<void> restaurar(MovimientoEliminado eliminado) async {
+    datos!.add(_borrados.remove(eliminado.fila['id'])!);
+    datos!.sort((a, b) => b.fechaHora.compareTo(a.fechaHora));
   }
 
   @override
@@ -267,5 +286,29 @@ void main() {
     await tester.tap(find.byTooltip('Mes anterior'));
     await tester.pumpAndSettle();
     expect(find.text('Sin movimientos en este mes.'), findsOneWidget);
+  });
+
+  testWidgets('Historial: deslizar elimina y "Deshacer" lo regresa', (
+    tester,
+  ) async {
+    final datos = [...movimientosDeEjemplo];
+    final repositorio = RepositorioFalso(() async => datos)..datos = datos;
+    await tester.pumpWidget(appCon(repositorio));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Historial'));
+    await tester.pumpAndSettle();
+
+    await tester.drag(find.text('Café con Ana'), const Offset(-600, 0));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Café con Ana'), findsNothing);
+    expect(find.text('"Café con Ana" eliminado'), findsOneWidget);
+    // La fila salió de la "base" (falsa), no solo de la pantalla.
+    expect(datos, hasLength(5));
+
+    await tester.tap(find.text('Deshacer'));
+    await tester.pumpAndSettle();
+    expect(find.text('Café con Ana'), findsOneWidget);
+    expect(datos, hasLength(6));
   });
 }

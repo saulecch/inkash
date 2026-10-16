@@ -1,5 +1,6 @@
 import 'package:inkash/features/home/data/datasources/movimientos_local_data_source.dart';
 import 'package:inkash/features/home/domain/movimiento.dart';
+import 'package:inkash/features/home/domain/movimiento_eliminado.dart';
 import 'package:inkash/features/home/domain/nuevo_movimiento.dart';
 import 'package:inkash/features/home/domain/totales_mes.dart';
 
@@ -29,6 +30,14 @@ class MovimientosRepository {
       mes: mes,
       categoria: categoria,
     );
+  }
+
+  Future<MovimientoEliminado?> eliminar(String id) {
+    return _localDataSource.eliminar(id);
+  }
+
+  Future<void> restaurar(MovimientoEliminado eliminado) {
+    return _localDataSource.restaurar(eliminado);
   }
 
   Future<List<String>> obtenerCategoriasUsadas() {
