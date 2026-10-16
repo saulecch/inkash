@@ -7,6 +7,7 @@ class NuevoMovimiento {
     required this.esIngreso,
     required this.categoria,
     required this.fecha,
+    this.cuentaId,
   }) : assert(montoCentavos > 0, 'El monto siempre llega positivo');
 
   final String titulo;
@@ -16,6 +17,9 @@ class NuevoMovimiento {
   final bool esIngreso;
   final String categoria;
   final DateTime fecha;
+
+  // s16-01: en qué cuenta pasó. null solo en datos de prueba.
+  final int? cuentaId;
 
   // En SQLite el gasto se guarda negativo: así SUM(monto_centavos) = saldo.
   int get montoFirmadoCentavos => esIngreso ? montoCentavos : -montoCentavos;

@@ -29,6 +29,7 @@ class MovimientosLocalDataSource {
         // La fecha viaja como entero (epoch en ms): ordenable y sin zona.
         'fecha': nuevo.fecha.millisecondsSinceEpoch,
         'categoria_id': categoriaId,
+        'cuenta_id': nuevo.cuentaId,
       });
     });
   }
@@ -79,9 +80,10 @@ class MovimientosLocalDataSource {
     final db = await _database.database;
     final filas = await db.rawQuery('''
       SELECT m.id, m.titulo, m.monto_centavos, m.fecha,
-             c.nombre AS categoria, c.icono
+             c.nombre AS categoria, c.icono, cu.nombre AS cuenta
       FROM movimientos m
       JOIN categorias c ON c.id = m.categoria_id
+      LEFT JOIN cuentas cu ON cu.id = m.cuenta_id
       ${condiciones.isEmpty ? '' : 'WHERE ${condiciones.join(' AND ')}'}
       ORDER BY m.fecha DESC, m.id DESC
       ${limite == null ? '' : 'LIMIT ?'}
@@ -156,7 +158,8 @@ class MovimientosLocalDataSource {
     return Movimiento(
       id: fila['id']! as String,
       titulo: fila['titulo']! as String,
-      subtitulo: fila['categoria']! as String,
+      // 'Transporte · Efectivo' (la cuenta puede faltar: LEFT JOIN).
+      subtitulo: [fila['categoria'], ?fila['cuenta']].join(' · '),
       icono: fila['icono']! as String,
       montoCentavos: montoFirmado.abs(),
       esIngreso: montoFirmado > 0,

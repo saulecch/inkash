@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:inkash/core/widgets/proximamente.dart';
+import 'package:inkash/features/cuentas/domain/cuenta.dart';
+import 'package:inkash/features/cuentas/presentation/cuentas_provider.dart';
 import 'package:inkash/features/historial/historial_page.dart';
 import 'package:inkash/features/home/presentation/controllers/home_controller.dart';
 import 'package:inkash/features/home/presentation/widgets/movimiento_bottom_sheet.dart';
@@ -75,6 +77,12 @@ class InkashShell extends ConsumerWidget {
   // Movido sin cambios desde HomePage: ahora se puede agregar desde
   // cualquier pestaña.
   Future<void> _agregarMovimiento(BuildContext context, WidgetRef ref) async {
+    // s16-01: las cuentas se piden ANTES de abrir el formulario. Si fallan,
+    // el formulario abre igual (sin selector): guardar no debe bloquearse.
+    final cuentas = await ref
+        .read(cuentasProvider.future)
+        .catchError((_) => <Cuenta>[]);
+    if (!context.mounted) return;
     // El sheet devuelve true con Navigator.pop(true) si guardó.
     final guardado = await showModalBottomSheet<bool>(
       context: context,
@@ -85,6 +93,7 @@ class InkashShell extends ConsumerWidget {
       // read (no watch): en un callback solo queremos llamar un método.
       builder: (context) => MovimientoBottomSheet(
         onGuardar: ref.read(homeControllerProvider.notifier).guardarMovimiento,
+        cuentas: cuentas,
       ),
     );
     if (guardado != true || !context.mounted) return;

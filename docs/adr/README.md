@@ -11,6 +11,7 @@ nuevo que lo **reemplaza** ("Estado: Reemplazado por ADR-000X").
 | [0001](0001-sqlite-y-centavos.md) | Persistencia local con SQLite y dinero en centavos enteros | Aceptado |
 | [0002](0002-riverpod-asyncnotifier.md) | Estado asíncrono con Riverpod `AsyncNotifier` | Aceptado |
 | [0003](0003-api-tipo-cambio-con-cache.md) | Datos remotos: red primero, caché local si falla | Aceptado |
+| [0004](0004-migraciones-numeradas-y-cuentas.md) | Migraciones numeradas; cuentas con Efectivo por defecto | Aceptado |
 
 ## Plantilla
 

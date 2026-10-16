@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:inkash/core/reloj.dart';
+import 'package:inkash/features/cuentas/presentation/cuentas_provider.dart';
 import 'package:inkash/features/historial/historial_controller.dart';
 import 'package:inkash/features/home/data/repositories/movimientos_repository.dart';
 import 'package:inkash/features/home/domain/movimiento.dart';
@@ -99,6 +100,7 @@ class HomeController extends AsyncNotifier<ResumenHome> {
     ref.invalidateSelf();
     ref.invalidate(historialProvider);
     ref.invalidate(categoriasUsadasProvider);
+    ref.invalidate(cuentasProvider); // s16-01: los saldos cambian
     await future;
   }
 }

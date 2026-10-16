@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:inkash/app.dart';
 import 'package:inkash/core/reloj.dart';
+import 'package:inkash/features/cuentas/domain/cuenta.dart';
+import 'package:inkash/features/cuentas/presentation/cuentas_provider.dart';
 import 'package:inkash/features/home/data/repositories/movimientos_repository.dart';
 import 'package:inkash/features/home/domain/movimiento.dart';
 import 'package:inkash/features/home/domain/movimiento_eliminado.dart';
@@ -161,6 +163,23 @@ Widget appCon(RepositorioFalso repositorio) {
       movimientosRepositoryProvider.overrideWithValue(repositorio),
       // Reloj fijo: la prueba dice "Octubre 2026" hoy y dentro de un año.
       relojProvider.overrideWithValue(() => DateTime(2026, 10, 15, 9)),
+      // s16-01: cuentas fijas (la tarjeta del Inicio y el formulario).
+      cuentasProvider.overrideWith(
+        (ref) async => const [
+          Cuenta(
+            id: 1,
+            nombre: 'Efectivo',
+            icono: 'payments',
+            saldoCentavos: 25000,
+          ),
+          Cuenta(
+            id: 2,
+            nombre: 'Banco',
+            icono: 'account_balance',
+            saldoCentavos: 756000,
+          ),
+        ],
+      ),
       // La tarjeta del dólar no debe salir a internet en una prueba.
       tipoCambioProvider.overrideWith(
         (ref) async => TipoCambio(
@@ -201,6 +220,7 @@ void main() {
     expect(find.text('Q5,691.50'), findsOneWidget);
     expect(find.text('Has usado Q808.50 de Q6,500.00'), findsOneWidget);
     expect(find.text('Dólar hoy · Q7.65'), findsOneWidget);
+    expect(find.text('Q7,810.00'), findsOneWidget); // suma de las cuentas
     expect(find.text('Octubre 2026'), findsOneWidget);
     // Solo los últimos 5 de 6 en el Inicio.
     expect(find.text('Vivienda'), findsNothing);
@@ -310,5 +330,19 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Café con Ana'), findsOneWidget);
     expect(datos, hasLength(6));
+  });
+
+  testWidgets('la tarjeta Cuentas abre la gestión de cuentas', (tester) async {
+    await tester.pumpWidget(
+      appCon(RepositorioFalso(() async => movimientosDeEjemplo)),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Q7,810.00'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Nueva cuenta'), findsOneWidget);
+    expect(find.text('Banco'), findsOneWidget);
+    expect(find.text('Q7,560.00'), findsOneWidget);
   });
 }

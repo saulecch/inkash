@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:inkash/core/format/formato_moneda.dart';
+import 'package:inkash/core/widgets/iconos.dart';
 import 'package:inkash/features/home/domain/movimiento.dart';
 import 'package:inkash/theme.dart';
 
@@ -45,18 +46,4 @@ class MovimientoTile extends StatelessWidget {
       ),
     );
   }
-}
-
-// Convierte el nombre del icono (guardado como texto) a un IconData.
-IconData iconoDe(String nombre) {
-  return switch (nombre) {
-    'directions_bus' => Icons.directions_bus,
-    'shopping_cart' => Icons.shopping_cart,
-    'arrow_upward' => Icons.arrow_upward,
-    'local_cafe' => Icons.local_cafe,
-    'movie' => Icons.movie_outlined,
-    'bolt' => Icons.bolt,
-    'home' => Icons.home,
-    _ => Icons.attach_money,
-  };
 }

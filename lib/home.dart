@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:inkash/core/format/formato_fecha.dart';
 import 'package:inkash/core/format/formato_moneda.dart';
 import 'package:inkash/features/home/presentation/controllers/home_controller.dart';
+import 'package:inkash/features/cuentas/presentation/tarjeta_cuentas.dart';
 import 'package:inkash/features/home/presentation/widgets/movimiento_tile.dart';
 import 'package:inkash/features/navegacion/navegacion_controller.dart';
 import 'package:inkash/features/tipo_cambio/presentation/tipo_cambio_card.dart';
@@ -81,7 +82,7 @@ class HomePage extends ConsumerWidget {
         const SizedBox(height: 22),
         Row(
           children: [
-            tarjetaHero('Cuentas', 'Q7,810.00'),
+            const TarjetaCuentas(), // s16-01: datos reales
             const SizedBox(width: 12),
             tarjetaHero('Metas de ahorro', '3 activas'),
           ],

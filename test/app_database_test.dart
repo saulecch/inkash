@@ -60,7 +60,7 @@ void main() {
         'nombre': 'Transporte',
       },
     ]);
-    expect(await reopened.getVersion(), 2);
+    expect(await reopened.getVersion(), AppDatabase.versionActual);
   });
 
   test('rechaza categorías inexistentes y protege categorías en uso', () async {
@@ -108,30 +108,73 @@ void main() {
     },
   );
 
-  // La prueba más importante de una migración: el usuario que ya tenía la
-  // app (versión 1) actualiza y NO pierde sus movimientos.
-  test('migra de la versión 1 a la 2 sin perder datos', () async {
+  // Crea una base EXACTAMENTE como la dejaba la app en la versión 1 (S11).
+  Future<String> crearBaseV1() async {
     final path = '${directory.path}/v1.db';
     final v1 = await databaseFactoryFfi.openDatabase(
       path,
       options: OpenDatabaseOptions(
         version: 1,
-        onCreate: (db, _) async {
-          await db.execute(
-            'CREATE TABLE categorias (id INTEGER PRIMARY KEY, nombre TEXT, icono TEXT)',
-          );
-          await db.insert('categorias', {'nombre': 'Hogar', 'icono': 'home'});
-        },
+        onCreate: (db, _) => AppDatabase.migraciones[1]!(db),
       ),
     );
+    final categoriaId = await v1.insert('categorias', {
+      'nombre': 'Hogar',
+      'icono': 'home',
+    });
+    await v1.insert('movimientos', movimiento(categoriaId));
     await v1.close();
+    return path;
+  }
 
-    final actualizada = AppDatabase(factory: databaseFactoryFfi, path: path);
+  // La prueba más importante de una migración: el usuario que ya tenía la
+  // app (versión 1) actualiza y NO pierde sus movimientos.
+  test('migra de la versión 1 a la actual sin perder datos', () async {
+    final actualizada = AppDatabase(
+      factory: databaseFactoryFfi,
+      path: await crearBaseV1(),
+    );
     final db = await actualizada.database;
 
-    expect(await db.getVersion(), 2);
+    expect(await db.getVersion(), AppDatabase.versionActual);
     expect(await db.query('categorias'), hasLength(1));
     expect(await db.query('cache_tipo_cambio'), isEmpty);
+    // v3: el movimiento viejo quedó asignado a "Efectivo".
+    final fila = (await db.rawQuery('''
+      SELECT m.titulo, c.nombre AS cuenta
+      FROM movimientos m JOIN cuentas c ON c.id = m.cuenta_id
+    ''')).single;
+    expect(fila, {'titulo': 'Uber al trabajo', 'cuenta': 'Efectivo'});
+    await actualizada.close();
+  });
+
+  // Si onCreate y onUpgrade divergen, un usuario nuevo y uno actualizado
+  // tendrían bases distintas. Esta prueba lo detecta comparando el esquema.
+  test('instalación nueva y actualizada tienen el mismo esquema', () async {
+    Future<List<Object?>> esquema(AppDatabase base) async {
+      final db = await base.database;
+      final filas = await db.rawQuery(
+        "SELECT type, name FROM sqlite_master WHERE name NOT LIKE 'sqlite_%' "
+        'ORDER BY type, name',
+      );
+      final columnas = [
+        for (final t in filas.where((f) => f['type'] == 'table'))
+          for (final c in await db.rawQuery('PRAGMA table_info(${t['name']})'))
+            '${t['name']}.${c['name']} ${c['type']}',
+      ];
+      return [...filas, ...columnas];
+    }
+
+    final nueva = AppDatabase(
+      factory: databaseFactoryFfi,
+      path: '${directory.path}/nueva.db',
+    );
+    final actualizada = AppDatabase(
+      factory: databaseFactoryFfi,
+      path: await crearBaseV1(),
+    );
+    expect(await esquema(actualizada), await esquema(nueva));
+    await nueva.close();
     await actualizada.close();
   });
 }

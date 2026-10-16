@@ -1,14 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:inkash/core/format/parse_monto.dart';
+import 'package:inkash/features/cuentas/domain/cuenta.dart';
 import 'package:inkash/features/home/domain/nuevo_movimiento.dart';
 import 'package:inkash/theme.dart';
 
 class MovimientoBottomSheet extends StatefulWidget {
-  const MovimientoBottomSheet({required this.onGuardar, super.key});
+  const MovimientoBottomSheet({
+    required this.onGuardar,
+    this.cuentas = const [],
+    super.key,
+  });
 
   // El formulario NO conoce SQLite ni el repositorio: recibe una función.
   // Así se puede probar con una función falsa (ver test/).
   final Future<void> Function(NuevoMovimiento nuevo) onGuardar;
+
+  // s16-01: las cuentas llegan por parámetro (igual que onGuardar):
+  // el formulario sigue sin conocer providers ni SQLite.
+  final List<Cuenta> cuentas;
 
   @override
   State<MovimientoBottomSheet> createState() => _MovimientoBottomSheetState();
@@ -30,6 +39,8 @@ class _MovimientoBottomSheetState extends State<MovimientoBottomSheet> {
 
   bool _esIngreso = false;
   String? _categoria;
+  // La primera cuenta (Efectivo) viene seleccionada: un toque menos.
+  late int? _cuentaId = widget.cuentas.firstOrNull?.id;
   DateTime _fecha = DateTime.now();
   TimeOfDay _hora = TimeOfDay.now();
 
@@ -86,6 +97,7 @@ class _MovimientoBottomSheetState extends State<MovimientoBottomSheet> {
           montoCentavos: _montoCentavos!,
           esIngreso: _esIngreso,
           categoria: _categoria!,
+          cuentaId: _cuentaId,
           fecha: fecha,
         ),
       );
@@ -270,6 +282,30 @@ class _MovimientoBottomSheetState extends State<MovimientoBottomSheet> {
                     ),
                 ],
               ),
+              // s16-01: selector de cuenta (solo si hay cuentas).
+              if (widget.cuentas.isNotEmpty) ...[
+                const SizedBox(height: 24),
+                Text(
+                  'Cuenta',
+                  style: theme.textTheme.titleSmall?.copyWith(color: kTexto),
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    for (final cuenta in widget.cuentas)
+                      ChoiceChip(
+                        label: Text(cuenta.nombre),
+                        selected: _cuentaId == cuenta.id,
+                        selectedColor: kIconoFondo,
+                        backgroundColor: kSuperficie,
+                        showCheckmark: false,
+                        onSelected: (_) =>
+                            setState(() => _cuentaId = cuenta.id),
+                      ),
+                  ],
+                ),
+              ],
               const SizedBox(height: 24),
               LayoutBuilder(
                 builder: (context, constraints) {
