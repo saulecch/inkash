@@ -13,6 +13,24 @@ flutter run            # Android, iOS o macOS. NO Chrome: sqflite no soporta Web
 flutter test           # pruebas (SQLite corre en la compu con sqflite_common_ffi)
 ```
 
+## Qué hace
+- **Bienvenida** (la primera vez): nombre, límite mensual y saldos de hoy.
+- **Inicio**: cuánto te queda del mes frente a tu límite, saldo de cuentas, metas activas,
+  tipo de cambio y últimos movimientos (tocar uno = editarlo).
+- **Presupuesto**: límite mensual por categoría con avance y resumen.
+- **(+)**: registrar gasto o ingreso con categoría (o crear una nueva) y cuenta.
+- **Historial**: por mes y categoría; tocar para editar, deslizar para borrar con *Deshacer*.
+- **Ajustes**: perfil, límite mensual, cuentas (con saldo inicial), categorías
+  (crear, archivar) y borrar los datos.
+- **Metas de ahorro**: desde la tarjeta del Inicio; crear, editar, aportar y retirar.
+
+Diseño: tokens y componentes en [`docs/diseno.md`](docs/diseno.md).
+
+## Publicar
+Ver [`docs/publicacion/firma.md`](docs/publicacion/firma.md) y
+[`docs/tienda/checklist-play.md`](docs/tienda/checklist-play.md). En resumen:
+subir `version` en el pubspec y `git push origin vX.Y.Z`.
+
 ## Arquitectura
 
 ```
@@ -24,6 +42,9 @@ lib/
       data/          datasource (SQL) -> repository
       presentation/  controller (Riverpod AsyncNotifier) + widgets
     tipo_cambio/     API remota + caché SQLite (mismas capas)
+    historial/ cuentas/ categorias/ presupuesto/ metas/ ajustes/
+    bienvenida/ navegacion/
+  core/ui/           componentes del sistema de diseño
 ```
 
 Decisiones documentadas en [`docs/adr/`](docs/adr/README.md).
@@ -31,7 +52,7 @@ Cómo colaborar: [`CONTRIBUTING.md`](CONTRIBUTING.md). Uso de IA: [`docs/bitacor
 
 ## Base de datos local
 
-La aplicación abre `inkash.db` (versión 2) la primera vez que un provider la necesita.
+La aplicación abre `inkash.db` (versión 7, ver `AppDatabase.migraciones`) la primera vez que un provider la necesita.
 `AppDatabase.instance.database` entrega la conexión compartida de sqflite.
 
 - `categorias`: `id` autoincremental, `nombre` único e `icono`.
