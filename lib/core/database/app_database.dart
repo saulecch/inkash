@@ -19,6 +19,7 @@ class AppDatabase {
     4: _v4Categorias,
     5: _v5Presupuestos,
     6: _v6Metas,
+    7: _v7Ajustes,
   };
   static int get versionActual => migraciones.length;
 
@@ -194,6 +195,18 @@ class AppDatabase {
         ahorrado_centavos INTEGER NOT NULL DEFAULT 0
           CHECK (ahorrado_centavos >= 0),
         creada_ms INTEGER NOT NULL
+      )
+    ''');
+  }
+
+  // v7 (S17-02): ajustes del usuario como pares clave -> valor.
+  // Una tabla clave/valor sirve para pocos datos sueltos (nombre, límite);
+  // NO para listas ni datos que se consultan con filtros.
+  static Future<void> _v7Ajustes(Database db) async {
+    await db.execute('''
+      CREATE TABLE ajustes (
+        clave TEXT NOT NULL PRIMARY KEY,
+        valor TEXT NOT NULL
       )
     ''');
   }

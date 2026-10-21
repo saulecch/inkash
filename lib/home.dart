@@ -55,7 +55,8 @@ class HomePage extends ConsumerWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Hola, Kevin', style: texto.titleMedium),
+            // s17-02: el nombre sale de Ajustes (adiós "Kevin" escrito a mano).
+            Text(resumen.saludo, style: texto.titleMedium),
             // s15-02: el mes real, no 'Julio 2026' escrito a mano.
             Text(nombreMes(resumen.mes), style: texto.bodySmall),
           ],

@@ -177,6 +177,17 @@ ThemeData buildInkashTheme() {
     ),
     listTileTheme: const ListTileThemeData(
       iconColor: kMuted,
+      // Título y subtítulo con jerarquía: el subtítulo es contexto.
+      titleTextStyle: TextStyle(
+        fontFamily: kFuente,
+        fontSize: 16,
+        color: kTexto,
+      ),
+      subtitleTextStyle: TextStyle(
+        fontFamily: kFuente,
+        fontSize: 13,
+        color: kMuted,
+      ),
       contentPadding: EdgeInsets.symmetric(horizontal: Espacio.l),
     ),
     dividerTheme: const DividerThemeData(color: kBorde, space: 1),

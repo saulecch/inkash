@@ -12,8 +12,6 @@ class MovimientosRepository {
 
   final MovimientosLocalDataSource _localDataSource;
 
-  final int limiteMensualCentavos = 650000;
-
   // La presentación no sabe que existe SQLite: solo pide "guarda esto".
   Future<void> guardar(NuevoMovimiento nuevo) {
     return _localDataSource.insertar(nuevo);

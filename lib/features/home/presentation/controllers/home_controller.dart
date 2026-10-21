@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:inkash/core/reloj.dart';
+import 'package:inkash/features/ajustes/presentation/ajustes_controller.dart';
 import 'package:inkash/features/cuentas/presentation/cuentas_provider.dart';
 import 'package:inkash/features/historial/historial_controller.dart';
 import 'package:inkash/features/presupuesto/presentation/presupuesto_provider.dart';
@@ -34,12 +35,14 @@ class ResumenHome {
     required this.ultimosMovimientos,
     required this.totalesMes,
     required this.limiteMensualCentavos,
+    this.saludo = 'Hola',
   });
 
   final DateTime mes;
   final List<Movimiento> ultimosMovimientos;
   final TotalesMes totalesMes;
   final int limiteMensualCentavos;
+  final String saludo; // s17-02: viene de Ajustes
 
   int get totalGastadoCentavos => totalesMes.gastosCentavos;
 
@@ -59,6 +62,9 @@ class HomeController extends AsyncNotifier<ResumenHome> {
   @override
   Future<ResumenHome> build() async {
     final hoy = ref.read(relojProvider)();
+    // s17-02: watch (no read) de Ajustes. Si el usuario cambia su límite o
+    // su nombre, este build se vuelve a ejecutar solo.
+    final ajustes = await ref.watch(ajustesProvider.future);
     // Dos consultas independientes EN PARALELO: (a, b).wait espera ambas.
     // Si una falla, el build falla y la pantalla muestra el error.
     final (ultimos, totales) = await (
@@ -69,7 +75,8 @@ class HomeController extends AsyncNotifier<ResumenHome> {
       mes: hoy,
       ultimosMovimientos: ultimos,
       totalesMes: totales,
-      limiteMensualCentavos: _repository.limiteMensualCentavos,
+      limiteMensualCentavos: ajustes.limiteMensualCentavos,
+      saludo: ajustes.saludo,
     );
   }
 

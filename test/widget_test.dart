@@ -5,6 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:inkash/app.dart';
 import 'package:inkash/core/reloj.dart';
+import 'package:inkash/features/ajustes/data/ajustes_repository.dart';
+import 'package:inkash/features/ajustes/domain/ajustes.dart';
+import 'package:inkash/features/ajustes/presentation/ajustes_controller.dart';
 import 'package:inkash/features/categorias/domain/categoria.dart';
 import 'package:inkash/features/categorias/presentation/categorias_provider.dart';
 import 'package:inkash/features/cuentas/domain/cuenta.dart';
@@ -181,11 +184,30 @@ class RepositorioFalso extends MovimientosRepository {
   }
 }
 
-Widget appCon(RepositorioFalso repositorio) {
+// s17-02: ajustes en memoria (sin SQLite).
+class AjustesFalsos extends AjustesRepository {
+  Ajustes actual = Ajustes.porDefecto;
+
+  @override
+  Future<Ajustes> leer() async => actual;
+
+  @override
+  Future<void> guardarNombre(String nombre) async => actual = Ajustes(
+    nombre: nombre,
+    limiteMensualCentavos: actual.limiteMensualCentavos,
+  );
+
+  @override
+  Future<void> guardarLimite(int centavos) async =>
+      actual = Ajustes(nombre: actual.nombre, limiteMensualCentavos: centavos);
+}
+
+Widget appCon(RepositorioFalso repositorio, {AjustesFalsos? ajustes}) {
   return ProviderScope(
     // Override: en esta prueba, el provider entrega el repositorio falso.
     overrides: [
       movimientosRepositoryProvider.overrideWithValue(repositorio),
+      ajustesRepositoryProvider.overrideWithValue(ajustes ?? AjustesFalsos()),
       // Reloj fijo: la prueba dice "Octubre 2026" hoy y dentro de un año.
       relojProvider.overrideWithValue(() => DateTime(2026, 10, 15, 9)),
       // s16-01: cuentas fijas (la tarjeta del Inicio y el formulario).
@@ -511,5 +533,40 @@ void main() {
     await tester.pageBack();
     await tester.pumpAndSettle();
     expect(find.text('Viaje a Tikal'), findsNothing);
+  });
+
+  testWidgets('cambiar límite y nombre en Ajustes recalcula el Inicio', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      appCon(
+        RepositorioFalso(() async => movimientosDeEjemplo),
+        ajustes: AjustesFalsos(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Hola'), findsOneWidget);
+    expect(find.text('Q5,691.50'), findsOneWidget); // Q6,500 - Q808.50
+
+    await tester.tap(find.text('Ajustes'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Límite mensual'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), '1000');
+    await tester.tap(find.text('Guardar'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Agrega tu nombre'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'Kevin');
+    await tester.tap(find.text('Guardar'));
+    await tester.pumpAndSettle();
+    expect(find.text('Kevin'), findsOneWidget);
+
+    // Ajustes no sabe que el Inicio existe: el Inicio hace watch de Ajustes.
+    await tester.tap(find.text('Inicio'));
+    await tester.pumpAndSettle();
+    expect(find.text('Hola, Kevin'), findsOneWidget);
+    expect(find.text('Q191.50'), findsOneWidget); // Q1,000 - Q808.50
   });
 }

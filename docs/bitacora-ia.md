@@ -17,6 +17,26 @@ qué especificaste, qué revisaste y qué rechazaste.
 
 ---
 
+## 2026-10-21 · @saulecch (docente) — S16 y S17 rehechas tras probar la app
+
+- **Herramienta:** Claude (asistente de código).
+- **Qué pasó:** la primera versión de S16–S17 pasaba todas las pruebas, pero al **usar** la app el
+  docente encontró que no estaba completa: no se podían crear ni editar categorías, las cuentas no
+  tenían saldo inicial (la tarjeta decía Q0.00), no se podía editar un movimiento, el formulario
+  ofrecía "Ingreso" en modo Gasto y Ajustes era un par de diálogos sin diseño.
+- **Lección:** las pruebas verifican lo que se especificó; **no** verifican lo que faltó especificar.
+  La revisión con la app en la mano (como usuario) encontró lo que ninguna prueba iba a encontrar.
+- **Especificación nueva:** S16 = datos completos (cuentas, categorías y edición con CRUD);
+  S17 = sistema de diseño + Ajustes + bienvenida + publicación.
+- **Rechazado / corregido durante la revisión:**
+  - `TextEditingController used after being disposed`: los diálogos destruían el controller mientras
+    la hoja se animaba. Ahora cada hoja es un `StatefulWidget` dueño de su controller.
+  - El nombre `Radio` para los tokens chocaba con el widget `Radio` de Flutter: se renombró a `Redondeo`.
+  - Invalidar el Inicio desde Ajustes creaba una dependencia circular (el Inicio ya hace `watch`
+    de Ajustes): se quitó.
+  - Revisión visual con capturas de las pantallas: se corrigieron "Te quedan −Q100.00" (ahora
+    "Te pasaste por…"), etiquetas cortadas en la barra y poco contraste en el chip de cuenta.
+
 ## 2026-10-15 · @saulecch (docente) — preparación de S14
 
 - **Herramienta:** Claude (asistente de código).
