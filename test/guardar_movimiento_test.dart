@@ -105,6 +105,29 @@ void main() {
       });
     });
 
+    test('actualizar cambia los datos y conserva el id', () async {
+      final dataSource = MovimientosLocalDataSource(database: database);
+      await dataSource.insertar(bus());
+      final antes = (await dataSource.obtenerMovimientos()).single;
+
+      await dataSource.actualizar(
+        antes.id,
+        NuevoMovimiento(
+          titulo: 'Taxi',
+          montoCentavos: 4500,
+          esIngreso: false,
+          categoria: 'Hogar',
+          fecha: antes.fechaHora,
+        ),
+      );
+
+      final despues = (await dataSource.obtenerMovimientos()).single;
+      expect(despues.id, antes.id);
+      expect(despues.titulo, 'Taxi');
+      expect(despues.montoCentavos, 4500);
+      expect(despues.categoria, 'Hogar');
+    });
+
     test('eliminar devuelve la fila y restaurar la deja idéntica', () async {
       final dataSource = MovimientosLocalDataSource(database: database);
       await dataSource.insertar(bus());

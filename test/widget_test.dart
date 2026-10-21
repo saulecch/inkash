@@ -12,6 +12,7 @@ import 'package:inkash/features/cuentas/presentation/cuentas_provider.dart';
 import 'package:inkash/features/home/data/repositories/movimientos_repository.dart';
 import 'package:inkash/features/home/domain/movimiento.dart';
 import 'package:inkash/features/home/domain/movimiento_eliminado.dart';
+import 'package:inkash/features/home/domain/nuevo_movimiento.dart';
 import 'package:inkash/features/home/domain/totales_mes.dart';
 import 'package:inkash/features/home/presentation/controllers/home_controller.dart';
 import 'package:inkash/features/tipo_cambio/domain/tipo_cambio.dart';
@@ -37,6 +38,7 @@ Movimiento _mov(
   fecha: etiqueta,
   fechaHora: fechaHora,
   esIngreso: esIngreso,
+  categoria: categoria,
 );
 
 final movimientosDeEjemplo = [
@@ -132,6 +134,23 @@ class RepositorioFalso extends MovimientosRepository {
     datos!.remove(m);
     _borrados[id] = m;
     return MovimientoEliminado({'id': id});
+  }
+
+  @override
+  Future<void> actualizar(String id, NuevoMovimiento nuevo) async {
+    final i = datos!.indexWhere((m) => m.id == id);
+    final viejo = datos![i];
+    datos![i] = Movimiento(
+      id: id,
+      titulo: nuevo.titulo,
+      subtitulo: nuevo.categoria,
+      icono: viejo.icono,
+      montoCentavos: nuevo.montoCentavos,
+      fecha: viejo.fecha,
+      fechaHora: nuevo.fecha,
+      esIngreso: nuevo.esIngreso,
+      categoria: nuevo.categoria,
+    );
   }
 
   @override
@@ -388,5 +407,29 @@ void main() {
     expect(find.text('Ingresos'), findsOneWidget);
     expect(find.text('Archivadas'), findsOneWidget);
     expect(find.text('Salario'), findsOneWidget);
+  });
+
+  testWidgets('tocar un movimiento abre el formulario lleno y guarda cambios', (
+    tester,
+  ) async {
+    final datos = [...movimientosDeEjemplo];
+    final repositorio = RepositorioFalso(() async => datos)..datos = datos;
+    await tester.pumpWidget(appCon(repositorio));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Uber al trabajo'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Editar movimiento'), findsOneWidget);
+    expect(find.widgetWithText(TextField, '38.00'), findsOneWidget);
+
+    await tester.enterText(find.widgetWithText(TextField, '38.00'), '40');
+    await tester.ensureVisible(find.text('Guardar cambios'));
+    await tester.tap(find.text('Guardar cambios'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Cambios guardados'), findsOneWidget);
+    expect(datos.first.montoCentavos, 4000);
+    expect(datos.first.id, '1'); // mismo registro, no uno nuevo
   });
 }

@@ -2,14 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:inkash/core/widgets/proximamente.dart';
 import 'package:inkash/features/ajustes/presentation/ajustes_page.dart';
-import 'package:inkash/features/categorias/domain/categoria.dart';
-import 'package:inkash/features/categorias/presentation/categorias_page.dart';
-import 'package:inkash/features/categorias/presentation/categorias_provider.dart';
-import 'package:inkash/features/cuentas/domain/cuenta.dart';
-import 'package:inkash/features/cuentas/presentation/cuentas_provider.dart';
 import 'package:inkash/features/historial/historial_page.dart';
-import 'package:inkash/features/home/presentation/controllers/home_controller.dart';
-import 'package:inkash/features/home/presentation/widgets/movimiento_bottom_sheet.dart';
+import 'package:inkash/features/home/presentation/widgets/abrir_formulario_movimiento.dart';
 import 'package:inkash/features/navegacion/navegacion_controller.dart';
 import 'package:inkash/home.dart';
 import 'package:inkash/theme.dart';
@@ -51,7 +45,7 @@ class InkashShell extends ConsumerWidget {
             .key,
         onTap: (index) {
           if (index == _indiceAgregar) {
-            _agregarMovimiento(context, ref);
+            abrirFormularioMovimiento(context, ref);
             return;
           }
           ref.read(navegacionProvider.notifier).ir(_pestanasPorIndice[index]!);
@@ -76,48 +70,5 @@ class InkashShell extends ConsumerWidget {
         ],
       ),
     );
-  }
-
-  // Movido sin cambios desde HomePage: ahora se puede agregar desde
-  // cualquier pestaña.
-  Future<void> _agregarMovimiento(BuildContext context, WidgetRef ref) async {
-    // s16-01: las cuentas se piden ANTES de abrir el formulario. Si fallan,
-    // el formulario abre igual (sin selector): guardar no debe bloquearse.
-    final cuentas = await ref
-        .read(cuentasProvider.future)
-        .catchError((_) => <Cuenta>[]);
-    final categorias = await ref
-        .read(categoriasProvider.future)
-        .catchError((_) => <Categoria>[]);
-    if (!context.mounted) return;
-    // El sheet devuelve true con Navigator.pop(true) si guardó.
-    final guardado = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      showDragHandle: true,
-      backgroundColor: kSuperficie,
-      // read (no watch): en un callback solo queremos llamar un método.
-      builder: (context) => MovimientoBottomSheet(
-        onGuardar: ref.read(homeControllerProvider.notifier).guardarMovimiento,
-        cuentas: cuentas,
-        categorias: categorias,
-        // Crear la categoría y devolverla ya con su id de la base.
-        onNuevaCategoria: (tipo) async {
-          final nombre = await abrirFormularioCategoria(
-            context,
-            ref,
-            tipoInicial: tipo,
-          );
-          if (nombre == null) return null;
-          final lista = await ref.read(categoriasProvider.future);
-          return lista.firstWhere((c) => c.nombre == nombre);
-        },
-      ),
-    );
-    if (guardado != true || !context.mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Movimiento guardado')));
   }
 }

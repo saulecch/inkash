@@ -5,6 +5,7 @@ import 'package:inkash/core/format/formato_moneda.dart';
 import 'package:inkash/features/historial/historial_controller.dart';
 import 'package:inkash/features/home/domain/movimiento.dart';
 import 'package:inkash/features/home/presentation/controllers/home_controller.dart';
+import 'package:inkash/features/home/presentation/widgets/abrir_formulario_movimiento.dart';
 import 'package:inkash/features/home/presentation/widgets/movimiento_tile.dart';
 import 'package:inkash/theme.dart';
 
@@ -204,7 +205,11 @@ class _Deslizable extends ConsumerWidget {
           return false;
         }
       },
-      child: MovimientoTile(movimiento: movimiento),
+      child: MovimientoTile(
+        movimiento: movimiento,
+        onTap: () =>
+            abrirFormularioMovimiento(context, ref, editar: movimiento),
+      ),
     );
   }
 }

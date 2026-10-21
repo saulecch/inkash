@@ -4,6 +4,7 @@ import 'package:inkash/core/format/formato_fecha.dart';
 import 'package:inkash/core/format/formato_moneda.dart';
 import 'package:inkash/features/home/presentation/controllers/home_controller.dart';
 import 'package:inkash/features/cuentas/presentation/tarjeta_cuentas.dart';
+import 'package:inkash/features/home/presentation/widgets/abrir_formulario_movimiento.dart';
 import 'package:inkash/features/home/presentation/widgets/movimiento_tile.dart';
 import 'package:inkash/features/navegacion/navegacion_controller.dart';
 import 'package:inkash/features/tipo_cambio/presentation/tipo_cambio_card.dart';
@@ -27,12 +28,12 @@ class HomePage extends ConsumerWidget {
         error: (error, _) => _ErrorCarga(
           onReintentar: () => ref.invalidate(homeControllerProvider),
         ),
-        data: (resumen) => _dashboard(resumen, ref),
+        data: (resumen) => _dashboard(context, resumen, ref),
       ),
     );
   }
 
-  Widget _dashboard(ResumenHome resumen, WidgetRef ref) {
+  Widget _dashboard(BuildContext context, ResumenHome resumen, WidgetRef ref) {
     final totalGastado = resumen.totalGastadoCentavos;
     final saldoDisponible = resumen.saldoDisponibleCentavos;
     final movimientos = resumen.ultimosMovimientos;
@@ -118,7 +119,11 @@ class HomePage extends ConsumerWidget {
             ),
           ),
         for (final movimiento in movimientos)
-          MovimientoTile(movimiento: movimiento),
+          MovimientoTile(
+            movimiento: movimiento,
+            onTap: () =>
+                abrirFormularioMovimiento(context, ref, editar: movimiento),
+          ),
       ],
     );
   }

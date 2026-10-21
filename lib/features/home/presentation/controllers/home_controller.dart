@@ -79,6 +79,12 @@ class HomeController extends AsyncNotifier<ResumenHome> {
     await _refrescarTodo();
   }
 
+  // s16-03: editar sigue la misma regla: escribir y reconsultar.
+  Future<void> actualizarMovimiento(String id, NuevoMovimiento nuevo) async {
+    await _repository.actualizar(id, nuevo);
+    await _refrescarTodo();
+  }
+
   // s15-04: borrar y deshacer siguen la misma regla que guardar:
   // escribir en SQLite y volver a consultar todo lo que depende de eso.
   Future<MovimientoEliminado?> eliminar(String id) async {

@@ -3,6 +3,7 @@ import 'package:inkash/core/format/parse_monto.dart';
 import 'package:inkash/core/widgets/iconos.dart';
 import 'package:inkash/features/categorias/domain/categoria.dart';
 import 'package:inkash/features/cuentas/domain/cuenta.dart';
+import 'package:inkash/features/home/domain/movimiento.dart';
 import 'package:inkash/features/home/domain/nuevo_movimiento.dart';
 import 'package:inkash/theme.dart';
 
@@ -12,8 +13,15 @@ class MovimientoBottomSheet extends StatefulWidget {
     this.cuentas = const [],
     this.categorias = const [],
     this.onNuevaCategoria,
+    this.inicial,
+    this.onEliminar,
     super.key,
   });
+
+  // s16-03: con `inicial`, el MISMO formulario sirve para editar.
+  // Reutilizar el formulario evita que "crear" y "editar" validen distinto.
+  final Movimiento? inicial;
+  final Future<void> Function()? onEliminar;
 
   // El formulario NO conoce SQLite ni el repositorio: recibe una función.
   // Así se puede probar con una función falsa (ver test/).
@@ -41,7 +49,9 @@ class _MovimientoBottomSheetState extends State<MovimientoBottomSheet> {
   // Solo las activas del tipo elegido: en modo Gasto no aparece "Salario".
   List<Categoria> get _categorias => [
     for (final c in _todas)
-      if (!c.archivada && c.esIngreso == _esIngreso) c,
+      // Al editar, la categoría actual se muestra aunque esté archivada.
+      if ((!c.archivada || c.nombre == _categoria) && c.esIngreso == _esIngreso)
+        c,
   ];
 
   Future<void> _nuevaCategoria() async {
@@ -72,6 +82,19 @@ class _MovimientoBottomSheetState extends State<MovimientoBottomSheet> {
   @override
   void initState() {
     super.initState();
+    final m = widget.inicial;
+    if (m != null) {
+      // Centavos -> texto sin double: 1250 -> "12.50".
+      _montoController.text =
+          '${m.montoCentavos ~/ 100}.'
+          '${(m.montoCentavos % 100).toString().padLeft(2, '0')}';
+      _tituloController.text = m.titulo;
+      _esIngreso = m.esIngreso;
+      _categoria = m.categoria;
+      _cuentaId = m.cuentaId ?? _cuentaId;
+      _fecha = m.fechaHora;
+      _hora = TimeOfDay.fromDateTime(m.fechaHora);
+    }
     // Reconstruir al escribir para habilitar/deshabilitar el botón.
     _montoController.addListener(_refrescar);
     _tituloController.addListener(_refrescar);
@@ -124,7 +147,7 @@ class _MovimientoBottomSheetState extends State<MovimientoBottomSheet> {
       );
       // Después de un await la pantalla pudo cerrarse: siempre preguntar.
       if (!mounted) return;
-      Navigator.of(context).pop(true);
+      Navigator.of(context).pop('guardado');
     } catch (_) {
       // El formulario conserva lo escrito para que el usuario reintente.
       if (mounted) {
@@ -185,7 +208,9 @@ class _MovimientoBottomSheetState extends State<MovimientoBottomSheet> {
                 children: [
                   Expanded(
                     child: Text(
-                      'Nuevo movimiento',
+                      widget.inicial == null
+                          ? 'Nuevo movimiento'
+                          : 'Editar movimiento',
                       style: theme.textTheme.titleLarge?.copyWith(
                         color: kTexto,
                         fontWeight: FontWeight.w600,
@@ -393,6 +418,8 @@ class _MovimientoBottomSheetState extends State<MovimientoBottomSheet> {
                 label: Text(
                   _guardando
                       ? 'Guardando…'
+                      : widget.inicial != null
+                      ? 'Guardar cambios'
                       : _esIngreso
                       ? 'Guardar ingreso'
                       : 'Guardar gasto',
@@ -406,6 +433,21 @@ class _MovimientoBottomSheetState extends State<MovimientoBottomSheet> {
                   style: const TextStyle(color: kPeligro, fontSize: 12),
                 ),
               ],
+              // Borrar también desde aquí: en escritorio deslizar no es obvio.
+              if (widget.onEliminar != null)
+                TextButton.icon(
+                  onPressed: _guardando
+                      ? null
+                      : () async {
+                          await widget.onEliminar!();
+                          if (context.mounted) {
+                            Navigator.of(context).pop('eliminado');
+                          }
+                        },
+                  style: TextButton.styleFrom(foregroundColor: kPeligro),
+                  icon: const Icon(Icons.delete_outline),
+                  label: const Text('Eliminar movimiento'),
+                ),
             ],
           ),
         ),

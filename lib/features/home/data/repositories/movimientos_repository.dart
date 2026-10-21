@@ -32,6 +32,10 @@ class MovimientosRepository {
     );
   }
 
+  Future<void> actualizar(String id, NuevoMovimiento nuevo) {
+    return _localDataSource.actualizar(id, nuevo);
+  }
+
   Future<MovimientoEliminado?> eliminar(String id) {
     return _localDataSource.eliminar(id);
   }

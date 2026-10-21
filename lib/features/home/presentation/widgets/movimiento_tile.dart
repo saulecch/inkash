@@ -7,13 +7,17 @@ import 'package:inkash/theme.dart';
 // s15-03: antes era el método filaMovimiento() de HomePage. Ahora lo usan
 // el Inicio y el Historial: un widget reutilizable (como ProductoPedido).
 class MovimientoTile extends StatelessWidget {
-  const MovimientoTile({required this.movimiento, super.key});
+  const MovimientoTile({required this.movimiento, this.onTap, super.key});
 
   final Movimiento movimiento;
+
+  // s16-03: tocar = editar.
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
+      onTap: onTap,
       leading: Container(
         width: 40,
         height: 40,

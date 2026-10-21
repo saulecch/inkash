@@ -34,6 +34,27 @@ class MovimientosLocalDataSource {
     });
   }
 
+  // s16-03: editar = UPDATE de la misma fila (mismo id). El id no cambia,
+  // así que el orden del historial y "Deshacer" siguen funcionando.
+  Future<void> actualizar(String id, NuevoMovimiento nuevo) async {
+    final db = await _database.database;
+    await db.transaction((txn) async {
+      final categoriaId = await _obtenerOCrearCategoria(txn, nuevo.categoria);
+      await txn.update(
+        'movimientos',
+        {
+          'titulo': nuevo.titulo,
+          'monto_centavos': nuevo.montoFirmadoCentavos,
+          'fecha': nuevo.fecha.millisecondsSinceEpoch,
+          'categoria_id': categoriaId,
+          'cuenta_id': nuevo.cuentaId,
+        },
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+    });
+  }
+
   // La tabla `categorias` empieza vacía: se crea la fila la primera vez que
   // se usa. `nombre` es UNIQUE, así que nunca habrá dos "Transporte".
   Future<int> _obtenerOCrearCategoria(Transaction txn, String nombre) async {
@@ -82,7 +103,8 @@ class MovimientosLocalDataSource {
     final db = await _database.database;
     final filas = await db.rawQuery('''
       SELECT m.id, m.titulo, m.monto_centavos, m.fecha,
-             c.nombre AS categoria, c.icono, cu.nombre AS cuenta
+             c.nombre AS categoria, c.icono, cu.nombre AS cuenta,
+             m.cuenta_id
       FROM movimientos m
       JOIN categorias c ON c.id = m.categoria_id
       LEFT JOIN cuentas cu ON cu.id = m.cuenta_id
@@ -167,6 +189,8 @@ class MovimientosLocalDataSource {
       esIngreso: montoFirmado > 0,
       fecha: etiquetaFecha(fecha, ahora: ahora),
       fechaHora: fecha,
+      categoria: fila['categoria']! as String,
+      cuentaId: fila['cuenta_id'] as int?,
     );
   }
 }
