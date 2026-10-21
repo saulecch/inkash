@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:inkash/core/widgets/proximamente.dart';
+import 'package:inkash/features/ajustes/presentation/ajustes_page.dart';
+import 'package:inkash/features/categorias/domain/categoria.dart';
+import 'package:inkash/features/categorias/presentation/categorias_page.dart';
+import 'package:inkash/features/categorias/presentation/categorias_provider.dart';
 import 'package:inkash/features/cuentas/domain/cuenta.dart';
 import 'package:inkash/features/cuentas/presentation/cuentas_provider.dart';
 import 'package:inkash/features/historial/historial_page.dart';
@@ -38,7 +42,7 @@ class InkashShell extends ConsumerWidget {
           HomePage(),
           ProximamentePage(titulo: 'Presupuesto', icono: Icons.bar_chart),
           HistorialPage(),
-          ProximamentePage(titulo: 'Ajustes', icono: Icons.settings),
+          AjustesPage(),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
@@ -82,6 +86,9 @@ class InkashShell extends ConsumerWidget {
     final cuentas = await ref
         .read(cuentasProvider.future)
         .catchError((_) => <Cuenta>[]);
+    final categorias = await ref
+        .read(categoriasProvider.future)
+        .catchError((_) => <Categoria>[]);
     if (!context.mounted) return;
     // El sheet devuelve true con Navigator.pop(true) si guardó.
     final guardado = await showModalBottomSheet<bool>(
@@ -94,6 +101,18 @@ class InkashShell extends ConsumerWidget {
       builder: (context) => MovimientoBottomSheet(
         onGuardar: ref.read(homeControllerProvider.notifier).guardarMovimiento,
         cuentas: cuentas,
+        categorias: categorias,
+        // Crear la categoría y devolverla ya con su id de la base.
+        onNuevaCategoria: (tipo) async {
+          final nombre = await abrirFormularioCategoria(
+            context,
+            ref,
+            tipoInicial: tipo,
+          );
+          if (nombre == null) return null;
+          final lista = await ref.read(categoriasProvider.future);
+          return lista.firstWhere((c) => c.nombre == nombre);
+        },
       ),
     );
     if (guardado != true || !context.mounted) return;

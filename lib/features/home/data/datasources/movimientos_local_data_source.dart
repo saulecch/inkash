@@ -47,7 +47,9 @@ class MovimientosLocalDataSource {
 
     return txn.insert('categorias', {
       'nombre': nombre,
-      'icono': categoriasBase[nombre] ?? 'attach_money',
+      // s16-02: el formulario ya ofrece solo categorías de la base; esto
+      // queda como respaldo (p. ej. datos de prueba).
+      'icono': 'attach_money',
     });
   }
 

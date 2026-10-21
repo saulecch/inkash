@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:inkash/app.dart';
 import 'package:inkash/core/reloj.dart';
+import 'package:inkash/features/categorias/domain/categoria.dart';
+import 'package:inkash/features/categorias/presentation/categorias_provider.dart';
 import 'package:inkash/features/cuentas/domain/cuenta.dart';
 import 'package:inkash/features/cuentas/presentation/cuentas_provider.dart';
 import 'package:inkash/features/home/data/repositories/movimientos_repository.dart';
@@ -180,6 +182,30 @@ Widget appCon(RepositorioFalso repositorio) {
           ),
         ],
       ),
+      // s16-02: categorías fijas.
+      categoriasProvider.overrideWith(
+        (ref) async => const [
+          Categoria(
+            id: 1,
+            nombre: 'Transporte',
+            icono: 'directions_bus',
+            tipo: TipoCategoria.gasto,
+          ),
+          Categoria(
+            id: 2,
+            nombre: 'Salario',
+            icono: 'work',
+            tipo: TipoCategoria.ingreso,
+          ),
+          Categoria(
+            id: 3,
+            nombre: 'Viejo',
+            icono: 'home',
+            tipo: TipoCategoria.gasto,
+            archivada: true,
+          ),
+        ],
+      ),
       // La tarjeta del dólar no debe salir a internet en una prueba.
       tipoCambioProvider.overrideWith(
         (ref) async => TipoCambio(
@@ -262,7 +288,7 @@ void main() {
     // y find las ignora por defecto.
     expect(find.text('Próximamente'), findsNothing);
 
-    await tester.tap(find.text('Ajustes'));
+    await tester.tap(find.text('Presupuesto'));
     await tester.pumpAndSettle();
     expect(find.text('Próximamente'), findsOneWidget);
 
@@ -344,5 +370,23 @@ void main() {
     expect(find.text('Nueva cuenta'), findsOneWidget);
     expect(find.text('Banco'), findsOneWidget);
     expect(find.text('Q7,560.00'), findsOneWidget);
+  });
+
+  testWidgets('Ajustes -> Categorías muestra gastos, ingresos y archivadas', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      appCon(RepositorioFalso(() async => movimientosDeEjemplo)),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Ajustes'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Categorías'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Gastos'), findsOneWidget);
+    expect(find.text('Ingresos'), findsOneWidget);
+    expect(find.text('Archivadas'), findsOneWidget);
+    expect(find.text('Salario'), findsOneWidget);
   });
 }

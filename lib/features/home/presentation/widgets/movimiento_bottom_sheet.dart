@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:inkash/core/format/parse_monto.dart';
+import 'package:inkash/core/widgets/iconos.dart';
+import 'package:inkash/features/categorias/domain/categoria.dart';
 import 'package:inkash/features/cuentas/domain/cuenta.dart';
 import 'package:inkash/features/home/domain/nuevo_movimiento.dart';
 import 'package:inkash/theme.dart';
@@ -8,6 +10,8 @@ class MovimientoBottomSheet extends StatefulWidget {
   const MovimientoBottomSheet({
     required this.onGuardar,
     this.cuentas = const [],
+    this.categorias = const [],
+    this.onNuevaCategoria,
     super.key,
   });
 
@@ -19,20 +23,37 @@ class MovimientoBottomSheet extends StatefulWidget {
   // el formulario sigue sin conocer providers ni SQLite.
   final List<Cuenta> cuentas;
 
+  // s16-02: las categorías vienen de la base (por parámetro, como cuentas).
+  final List<Categoria> categorias;
+
+  // "+ Nueva": crea una categoría sin salir del formulario. Devuelve la
+  // categoría creada (o null si el usuario canceló).
+  final Future<Categoria?> Function(TipoCategoria tipo)? onNuevaCategoria;
+
   @override
   State<MovimientoBottomSheet> createState() => _MovimientoBottomSheetState();
 }
 
 class _MovimientoBottomSheetState extends State<MovimientoBottomSheet> {
-  // Por ahora las categorías están aquí, después vendrán de la BD.
-  static const _categorias = {
-    'Transporte': Icons.directions_bus_outlined,
-    'Súper y comida': Icons.shopping_basket_outlined,
-    'Ingreso': Icons.payments_outlined,
-    'Entretenimiento': Icons.movie_outlined,
-    'Servicios': Icons.bolt_outlined,
-    'Hogar': Icons.home_outlined,
-  };
+  // Copia local: "+ Nueva" agrega aquí la recién creada.
+  late final List<Categoria> _todas = [...widget.categorias];
+
+  // Solo las activas del tipo elegido: en modo Gasto no aparece "Salario".
+  List<Categoria> get _categorias => [
+    for (final c in _todas)
+      if (!c.archivada && c.esIngreso == _esIngreso) c,
+  ];
+
+  Future<void> _nuevaCategoria() async {
+    final creada = await widget.onNuevaCategoria!(
+      _esIngreso ? TipoCategoria.ingreso : TipoCategoria.gasto,
+    );
+    if (creada == null || !mounted) return;
+    setState(() {
+      _todas.add(creada);
+      _categoria = creada.nombre;
+    });
+  }
 
   final _montoController = TextEditingController();
   final _tituloController = TextEditingController();
@@ -206,7 +227,13 @@ class _MovimientoBottomSheetState extends State<MovimientoBottomSheet> {
                   side: const BorderSide(color: kBorde),
                 ),
                 onSelectionChanged: (seleccion) {
-                  setState(() => _esIngreso = seleccion.single);
+                  setState(() {
+                    _esIngreso = seleccion.single;
+                    // La categoría elegida ya no es del tipo: se limpia.
+                    if (!_categorias.any((c) => c.nombre == _categoria)) {
+                      _categoria = null;
+                    }
+                  });
                 },
               ),
               const SizedBox(height: 24),
@@ -255,30 +282,38 @@ class _MovimientoBottomSheetState extends State<MovimientoBottomSheet> {
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  for (final categoria in _categorias.entries)
+                  for (final categoria in _categorias)
                     ChoiceChip(
-                      label: Text(categoria.key),
+                      label: Text(categoria.nombre),
                       avatar: Icon(
-                        categoria.value,
+                        iconoDe(categoria.icono),
                         size: 18,
-                        color: _categoria == categoria.key ? kLima : kMuted,
+                        color: _categoria == categoria.nombre ? kLima : kMuted,
                       ),
-                      selected: _categoria == categoria.key,
+                      selected: _categoria == categoria.nombre,
                       selectedColor: kIconoFondo,
                       backgroundColor: kSuperficie,
                       labelStyle: TextStyle(
-                        color: _categoria == categoria.key ? kLima : kTexto,
+                        color: _categoria == categoria.nombre ? kLima : kTexto,
                       ),
                       side: BorderSide(
-                        color: _categoria == categoria.key ? kLima : kBorde,
+                        color: _categoria == categoria.nombre ? kLima : kBorde,
                       ),
                       showCheckmark: false,
                       onSelected: (selected) {
                         FocusScope.of(context).unfocus();
                         setState(() {
-                          _categoria = selected ? categoria.key : null;
+                          _categoria = selected ? categoria.nombre : null;
                         });
                       },
+                    ),
+                  if (widget.onNuevaCategoria != null)
+                    ActionChip(
+                      avatar: const Icon(Icons.add, size: 18, color: kLima),
+                      label: const Text('Nueva'),
+                      backgroundColor: kSuperficie,
+                      side: const BorderSide(color: kBorde),
+                      onPressed: _nuevaCategoria,
                     ),
                 ],
               ),

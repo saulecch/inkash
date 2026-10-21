@@ -16,6 +16,7 @@ class AppDatabase {
     1: _v1TablasBase,
     2: _v2CacheTipoCambio,
     3: _v3Cuentas,
+    4: _v4Categorias,
   };
   static int get versionActual => migraciones.length;
 
@@ -131,6 +132,38 @@ class AppDatabase {
     ''');
     await db.execute(
       'CREATE INDEX idx_movimientos_cuenta_id ON movimientos (cuenta_id)',
+    );
+  }
+
+  // v4 (S16-02): categorías administrables con tipo (gasto / ingreso) y
+  // archivado. Antes vivían escritas en el formulario.
+  static Future<void> _v4Categorias(Database db) async {
+    // ADD COLUMN con DEFAULT: las filas existentes reciben 'gasto' y 0.
+    await db.execute('''
+      ALTER TABLE categorias ADD COLUMN tipo TEXT NOT NULL DEFAULT 'gasto'
+        CHECK (tipo IN ('gasto', 'ingreso'))
+    ''');
+    // Archivar en vez de borrar: una categoría con movimientos no se puede
+    // borrar (FOREIGN KEY), pero sí dejar de ofrecerse en el formulario.
+    await db.execute(
+      'ALTER TABLE categorias ADD COLUMN archivada INTEGER NOT NULL DEFAULT 0',
+    );
+    // Categorías base. Los nombres van ESCRITOS AQUÍ y no importados de la
+    // app: una migración es una foto del pasado y no debe cambiar si el código
+    // cambia. INSERT OR IGNORE: las que ya existen (UNIQUE) se saltan.
+    await db.execute('''
+      INSERT OR IGNORE INTO categorias (nombre, icono, tipo) VALUES
+        ('Transporte', 'directions_bus', 'gasto'),
+        ('Súper y comida', 'shopping_cart', 'gasto'),
+        ('Entretenimiento', 'movie', 'gasto'),
+        ('Servicios', 'bolt', 'gasto'),
+        ('Hogar', 'home', 'gasto'),
+        ('Salario', 'work', 'ingreso'),
+        ('Otros ingresos', 'arrow_upward', 'ingreso')
+    ''');
+    // La vieja categoría "Ingreso" (S11–S15) era de ingresos.
+    await db.execute(
+      "UPDATE categorias SET tipo = 'ingreso' WHERE nombre = 'Ingreso'",
     );
   }
 

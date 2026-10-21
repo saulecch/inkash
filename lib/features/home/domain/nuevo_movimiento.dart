@@ -24,14 +24,3 @@ class NuevoMovimiento {
   // En SQLite el gasto se guarda negativo: así SUM(monto_centavos) = saldo.
   int get montoFirmadoCentavos => esIngreso ? montoCentavos : -montoCentavos;
 }
-
-// Categorías que ofrece el formulario y el nombre del icono que se guarda
-// en la tabla `categorias` (texto, porque SQLite no sabe qué es un IconData).
-const categoriasBase = <String, String>{
-  'Transporte': 'directions_bus',
-  'Súper y comida': 'shopping_cart',
-  'Ingreso': 'arrow_upward',
-  'Entretenimiento': 'movie',
-  'Servicios': 'bolt',
-  'Hogar': 'home',
-};

@@ -34,7 +34,7 @@ void main() {
   test('persiste movimientos relacionados al cerrar y abrir la base', () async {
     final db = await database.database;
     final categoriaId = await db.insert('categorias', {
-      'nombre': 'Transporte',
+      'nombre': 'Prueba',
       'icono': 'directions_bus',
     });
     await db.insert('movimientos', movimiento(categoriaId));
@@ -57,7 +57,7 @@ void main() {
           15,
           123,
         ).millisecondsSinceEpoch,
-        'nombre': 'Transporte',
+        'nombre': 'Prueba',
       },
     ]);
     expect(await reopened.getVersion(), AppDatabase.versionActual);
@@ -70,7 +70,7 @@ void main() {
       throwsA(isA<DatabaseException>()),
     );
     final categoriaId = await db.insert('categorias', {
-      'nombre': 'Transporte',
+      'nombre': 'Prueba',
       'icono': 'directions_bus',
     });
     await db.insert('movimientos', movimiento(categoriaId));
@@ -137,7 +137,14 @@ void main() {
     final db = await actualizada.database;
 
     expect(await db.getVersion(), AppDatabase.versionActual);
-    expect(await db.query('categorias'), hasLength(1));
+    // La de v1 (Hogar) se conserva y v4 agrega las base que faltaban.
+    expect(await db.query('categorias'), hasLength(7));
+    final hogar = await db.query(
+      'categorias',
+      where: 'nombre = ?',
+      whereArgs: ['Hogar'],
+    );
+    expect(hogar.single['tipo'], 'gasto');
     expect(await db.query('cache_tipo_cambio'), isEmpty);
     // v3: el movimiento viejo quedó asignado a "Efectivo".
     final fila = (await db.rawQuery('''

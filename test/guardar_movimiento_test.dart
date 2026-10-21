@@ -4,12 +4,29 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:inkash/core/database/app_database.dart';
+import 'package:inkash/features/categorias/domain/categoria.dart';
 import 'package:inkash/core/format/parse_monto.dart';
 import 'package:inkash/features/home/data/datasources/movimientos_local_data_source.dart';
 import 'package:inkash/features/home/domain/movimiento.dart';
 import 'package:inkash/features/home/domain/nuevo_movimiento.dart';
 import 'package:inkash/features/home/presentation/widgets/movimiento_bottom_sheet.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+
+// s16-02: el formulario recibe las categorías (antes estaban escritas en él).
+const categoriasDePrueba = [
+  Categoria(
+    id: 1,
+    nombre: 'Transporte',
+    icono: 'directions_bus',
+    tipo: TipoCategoria.gasto,
+  ),
+  Categoria(
+    id: 2,
+    nombre: 'Salario',
+    icono: 'work',
+    tipo: TipoCategoria.ingreso,
+  ),
+];
 
 void main() {
   group('parseMontoCentavos (sin double)', () {
@@ -75,11 +92,17 @@ void main() {
       expect(movimientos, hasLength(2));
       expect(movimientos.first['monto_centavos'], -1250);
 
-      // Dos movimientos de Transporte reutilizan UNA sola categoría.
-      final categorias = await db.query('categorias');
-      expect(categorias, [
-        {'id': 1, 'nombre': 'Transporte', 'icono': 'directions_bus'},
-      ]);
+      // Dos movimientos de Transporte reutilizan UNA sola categoría
+      // (desde v4 la categoría ya existe: la crea la migración).
+      final transporte = await db.query(
+        'categorias',
+        where: 'nombre = ?',
+        whereArgs: ['Transporte'],
+      );
+      expect(transporte, hasLength(1));
+      expect(movimientos.map((m) => m['categoria_id']).toSet(), {
+        transporte.single['id'],
+      });
     });
 
     test('eliminar devuelve la fila y restaurar la deja idéntica', () async {
@@ -209,7 +232,10 @@ void main() {
         await tester.pumpWidget(
           MaterialApp(
             home: Scaffold(
-              body: MovimientoBottomSheet(onGuardar: (_) async {}),
+              body: MovimientoBottomSheet(
+                onGuardar: (_) async {},
+                categorias: categoriasDePrueba,
+              ),
             ),
           ),
         );
@@ -229,6 +255,7 @@ void main() {
         MaterialApp(
           home: Scaffold(
             body: MovimientoBottomSheet(
+              categorias: categoriasDePrueba,
               onGuardar: (nuevo) {
                 llamadas++;
                 expect(nuevo.montoCentavos, 1250);
