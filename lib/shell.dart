@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:inkash/core/widgets/proximamente.dart';
 import 'package:inkash/features/ajustes/presentation/ajustes_page.dart';
 import 'package:inkash/features/historial/historial_page.dart';
 import 'package:inkash/features/home/presentation/widgets/abrir_formulario_movimiento.dart';
 import 'package:inkash/features/navegacion/navegacion_controller.dart';
+import 'package:inkash/features/presupuesto/presentation/presupuesto_page.dart';
 import 'package:inkash/home.dart';
 import 'package:inkash/theme.dart';
 
@@ -34,7 +34,7 @@ class InkashShell extends ConsumerWidget {
         index: actual.index,
         children: const [
           HomePage(),
-          ProximamentePage(titulo: 'Presupuesto', icono: Icons.bar_chart),
+          PresupuestoPage(),
           HistorialPage(),
           AjustesPage(),
         ],

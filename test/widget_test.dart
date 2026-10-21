@@ -15,6 +15,8 @@ import 'package:inkash/features/home/domain/movimiento_eliminado.dart';
 import 'package:inkash/features/home/domain/nuevo_movimiento.dart';
 import 'package:inkash/features/home/domain/totales_mes.dart';
 import 'package:inkash/features/home/presentation/controllers/home_controller.dart';
+import 'package:inkash/features/presupuesto/domain/presupuesto_categoria.dart';
+import 'package:inkash/features/presupuesto/presentation/presupuesto_provider.dart';
 import 'package:inkash/features/tipo_cambio/domain/tipo_cambio.dart';
 import 'package:inkash/features/tipo_cambio/presentation/tipo_cambio_provider.dart';
 
@@ -225,6 +227,24 @@ Widget appCon(RepositorioFalso repositorio) {
           ),
         ],
       ),
+      // s16-04: presupuesto fijo para la pestaña.
+      presupuestoProvider.overrideWith(
+        (ref) async => const [
+          PresupuestoCategoria(
+            categoriaId: 2,
+            nombre: 'Súper y comida',
+            icono: 'shopping_cart',
+            gastadoCentavos: 60000,
+            limiteCentavos: 50000,
+          ),
+          PresupuestoCategoria(
+            categoriaId: 5,
+            nombre: 'Servicios',
+            icono: 'bolt',
+            gastadoCentavos: 42000,
+          ),
+        ],
+      ),
       // La tarjeta del dólar no debe salir a internet en una prueba.
       tipoCambioProvider.overrideWith(
         (ref) async => TipoCambio(
@@ -305,11 +325,11 @@ void main() {
 
     // IndexedStack: las pestañas ocultas existen pero están "offstage",
     // y find las ignora por defecto.
-    expect(find.text('Próximamente'), findsNothing);
+    expect(find.text('Presupuesto · Octubre 2026'), findsNothing);
 
     await tester.tap(find.text('Presupuesto'));
     await tester.pumpAndSettle();
-    expect(find.text('Próximamente'), findsOneWidget);
+    expect(find.text('Presupuesto · Octubre 2026'), findsOneWidget);
 
     await tester.tap(find.text('Inicio'));
     await tester.pumpAndSettle();
@@ -431,5 +451,18 @@ void main() {
     expect(find.text('Cambios guardados'), findsOneWidget);
     expect(datos.first.montoCentavos, 4000);
     expect(datos.first.id, '1'); // mismo registro, no uno nuevo
+  });
+
+  testWidgets('Presupuesto: resumen, excedido y "sin límite"', (tester) async {
+    await tester.pumpWidget(
+      appCon(RepositorioFalso(() async => movimientosDeEjemplo)),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Presupuesto'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Te quedan −Q100.00'), findsOneWidget);
+    expect(find.text('Q600.00 de Q500.00 · excedido'), findsOneWidget);
+    expect(find.text('Gastado Q420.00 · sin límite'), findsOneWidget);
   });
 }

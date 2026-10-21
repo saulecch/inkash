@@ -17,6 +17,7 @@ class AppDatabase {
     2: _v2CacheTipoCambio,
     3: _v3Cuentas,
     4: _v4Categorias,
+    5: _v5Presupuestos,
   };
   static int get versionActual => migraciones.length;
 
@@ -165,6 +166,19 @@ class AppDatabase {
     await db.execute(
       "UPDATE categorias SET tipo = 'ingreso' WHERE nombre = 'Ingreso'",
     );
+  }
+
+  // v5 (S16-04): límite mensual por categoría.
+  static Future<void> _v5Presupuestos(Database db) async {
+    // categoria_id es la llave primaria: UNA fila (un límite) por categoría.
+    // ON DELETE CASCADE: si se borra la categoría, su límite también.
+    await db.execute('''
+      CREATE TABLE presupuestos (
+        categoria_id INTEGER PRIMARY KEY
+          REFERENCES categorias (id) ON DELETE CASCADE,
+        limite_centavos INTEGER NOT NULL CHECK (limite_centavos > 0)
+      )
+    ''');
   }
 
   Future<void> close() async {
