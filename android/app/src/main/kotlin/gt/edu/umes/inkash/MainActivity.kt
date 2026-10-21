@@ -1,4 +1,4 @@
-package com.example.inkash
+package gt.edu.umes.inkash
 
 import io.flutter.embedding.android.FlutterActivity
 

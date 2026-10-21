@@ -4,7 +4,7 @@
          por eso este error suele descubrirse hasta publicar. -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <application
-        android:label="inkash"
+        android:label="Inkash"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
