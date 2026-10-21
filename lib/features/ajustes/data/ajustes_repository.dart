@@ -11,5 +11,6 @@ class AjustesRepository {
   Future<void> guardarNombre(String nombre) =>
       _local.guardarNombre(nombre.trim());
   Future<void> guardarLimite(int centavos) => _local.guardarLimite(centavos);
+  Future<void> marcarBienvenidaCompleta() => _local.marcarBienvenidaCompleta();
   Future<void> borrarDatosDelUsuario() => _local.borrarDatosDelUsuario();
 }

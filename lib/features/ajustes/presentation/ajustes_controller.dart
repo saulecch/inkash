@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:inkash/features/ajustes/data/ajustes_repository.dart';
 import 'package:inkash/features/ajustes/domain/ajustes.dart';
+import 'package:inkash/features/cuentas/domain/cuenta.dart';
 import 'package:inkash/features/cuentas/presentation/cuentas_provider.dart';
 import 'package:inkash/features/historial/historial_controller.dart';
 import 'package:inkash/features/metas/presentation/metas_provider.dart';
@@ -32,6 +33,31 @@ class AjustesController extends AsyncNotifier<Ajustes> {
 
   Future<void> cambiarLimite(int centavos) async {
     await _repo.guardarLimite(centavos);
+    ref.invalidateSelf();
+    await future;
+  }
+
+  // s17-03: lo que se contesta en la bienvenida se guarda con los MISMOS
+  // repositorios que usan Ajustes y Cuentas: la bienvenida no tiene datos
+  // propios, solo es otra forma de llegar a ellos.
+  Future<void> completarBienvenida({
+    required String nombre,
+    required int limiteMensualCentavos,
+    required List<(Cuenta, int)> saldosIniciales,
+  }) async {
+    if (nombre.trim().isNotEmpty) await _repo.guardarNombre(nombre);
+    await _repo.guardarLimite(limiteMensualCentavos);
+    final cuentas = ref.read(cuentasRepositoryProvider);
+    for (final (cuenta, saldo) in saldosIniciales) {
+      await cuentas.guardar(
+        id: cuenta.id,
+        nombre: cuenta.nombre,
+        icono: cuenta.icono,
+        saldoInicialCentavos: saldo,
+      );
+    }
+    await _repo.marcarBienvenidaCompleta();
+    ref.invalidate(cuentasProvider);
     ref.invalidateSelf();
     await future;
   }

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:inkash/app.dart';
 import 'package:inkash/core/reloj.dart';
+import 'package:inkash/features/cuentas/data/cuentas_repository.dart';
 import 'package:inkash/features/ajustes/data/ajustes_repository.dart';
 import 'package:inkash/features/ajustes/domain/ajustes.dart';
 import 'package:inkash/features/ajustes/presentation/ajustes_controller.dart';
@@ -186,7 +187,15 @@ class RepositorioFalso extends MovimientosRepository {
 
 // s17-02: ajustes en memoria (sin SQLite).
 class AjustesFalsos extends AjustesRepository {
-  Ajustes actual = Ajustes.porDefecto;
+  // Por defecto, como alguien que ya pasó la bienvenida (s17-03).
+  AjustesFalsos({bool bienvenidaCompleta = true})
+    : actual = Ajustes(
+        nombre: '',
+        limiteMensualCentavos: Ajustes.porDefecto.limiteMensualCentavos,
+        bienvenidaCompleta: bienvenidaCompleta,
+      );
+
+  Ajustes actual;
 
   @override
   Future<Ajustes> leer() async => actual;
@@ -195,19 +204,48 @@ class AjustesFalsos extends AjustesRepository {
   Future<void> guardarNombre(String nombre) async => actual = Ajustes(
     nombre: nombre,
     limiteMensualCentavos: actual.limiteMensualCentavos,
+    bienvenidaCompleta: actual.bienvenidaCompleta,
   );
 
   @override
-  Future<void> guardarLimite(int centavos) async =>
-      actual = Ajustes(nombre: actual.nombre, limiteMensualCentavos: centavos);
+  Future<void> guardarLimite(int centavos) async => actual = Ajustes(
+    nombre: actual.nombre,
+    limiteMensualCentavos: centavos,
+    bienvenidaCompleta: actual.bienvenidaCompleta,
+  );
+
+  @override
+  Future<void> marcarBienvenidaCompleta() async => actual = Ajustes(
+    nombre: actual.nombre,
+    limiteMensualCentavos: actual.limiteMensualCentavos,
+    bienvenidaCompleta: true,
+  );
 }
 
-Widget appCon(RepositorioFalso repositorio, {AjustesFalsos? ajustes}) {
+// s17-03: cuentas en memoria; registra los saldos iniciales que se guardan.
+class CuentasFalsas extends CuentasRepository {
+  final saldosGuardados = <String, int>{};
+
+  @override
+  Future<void> guardar({
+    int? id,
+    required String nombre,
+    required String icono,
+    required int saldoInicialCentavos,
+  }) async => saldosGuardados[nombre] = saldoInicialCentavos;
+}
+
+Widget appCon(
+  RepositorioFalso repositorio, {
+  AjustesFalsos? ajustes,
+  CuentasFalsas? cuentas,
+}) {
   return ProviderScope(
     // Override: en esta prueba, el provider entrega el repositorio falso.
     overrides: [
       movimientosRepositoryProvider.overrideWithValue(repositorio),
       ajustesRepositoryProvider.overrideWithValue(ajustes ?? AjustesFalsos()),
+      cuentasRepositoryProvider.overrideWithValue(cuentas ?? CuentasFalsas()),
       // Reloj fijo: la prueba dice "Octubre 2026" hoy y dentro de un año.
       relojProvider.overrideWithValue(() => DateTime(2026, 10, 15, 9)),
       // s16-01: cuentas fijas (la tarjeta del Inicio y el formulario).
@@ -315,6 +353,8 @@ void main() {
   testWidgets('cargando -> datos: totales SOLO del mes actual', (tester) async {
     final lectura = Completer<List<Movimiento>>();
     await tester.pumpWidget(appCon(RepositorioFalso(() => lectura.future)));
+    // s17-03: el primer frame lee Ajustes (¿bienvenida o pestañas?).
+    await tester.pump();
 
     // Mientras el Future no termina: estado de carga.
     expect(find.byType(CircularProgressIndicator), findsWidgets);
@@ -568,5 +608,45 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Hola, Kevin'), findsOneWidget);
     expect(find.text('Q191.50'), findsOneWidget); // Q1,000 - Q808.50
+  });
+
+  testWidgets('bienvenida: 3 pasos y luego el Inicio ya configurado', (
+    tester,
+  ) async {
+    final cuentas = CuentasFalsas();
+    await tester.pumpWidget(
+      appCon(
+        RepositorioFalso(() async => movimientosDeEjemplo),
+        ajustes: AjustesFalsos(bienvenidaCompleta: false),
+        cuentas: cuentas,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Te damos la bienvenida a Inkash'), findsOneWidget);
+    await tester.enterText(find.byType(TextField), 'Ana');
+    await tester.tap(find.text('Continuar'));
+    await tester.pumpAndSettle();
+
+    // Paso 2: el límite es obligatorio; vacío no deja continuar.
+    await tester.enterText(find.byType(TextField), '');
+    await tester.pump();
+    expect(
+      tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+      isNull,
+    );
+    await tester.enterText(find.byType(TextField), '3000');
+    await tester.pump(); // el botón se habilita en el siguiente frame
+    await tester.tap(find.text('Continuar'));
+    await tester.pumpAndSettle();
+
+    // Paso 3: saldo de Efectivo; Banco se deja en blanco.
+    await tester.enterText(find.widgetWithText(TextField, 'Efectivo'), '250');
+    await tester.tap(find.text('Empezar'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Hola, Ana'), findsOneWidget);
+    expect(find.text('Q2,191.50'), findsOneWidget); // Q3,000 - Q808.50
+    expect(cuentas.saldosGuardados, {'Efectivo': 25000});
   });
 }

@@ -59,7 +59,12 @@ void main() {
       ),
     );
 
+    await ajustes.marcarBienvenidaCompleta();
+    expect((await ajustes.leer()).bienvenidaCompleta, isTrue);
+
     await ajustes.borrarDatosDelUsuario();
+    // Empezar de cero = volver a ver la bienvenida.
+    expect((await ajustes.leer()).bienvenidaCompleta, isFalse);
 
     final db = await database.database;
     expect(await db.query('movimientos'), isEmpty);

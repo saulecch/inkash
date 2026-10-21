@@ -10,6 +10,7 @@ class AjustesLocalDataSource {
 
   static const _nombre = 'nombre';
   static const _limite = 'limite_mensual_centavos';
+  static const _bienvenida = 'bienvenida_completa';
 
   Future<Ajustes> leer() async {
     final db = await _database.database;
@@ -23,6 +24,7 @@ class AjustesLocalDataSource {
       nombre: valores[_nombre] ?? d.nombre,
       limiteMensualCentavos:
           int.tryParse(valores[_limite] ?? '') ?? d.limiteMensualCentavos,
+      bienvenidaCompleta: valores[_bienvenida] == '1',
     );
   }
 
@@ -30,6 +32,8 @@ class AjustesLocalDataSource {
 
   Future<void> guardarLimite(int centavos) =>
       _guardar(_limite, centavos.toString());
+
+  Future<void> marcarBienvenidaCompleta() => _guardar(_bienvenida, '1');
 
   Future<void> _guardar(String clave, String valor) async {
     final db = await _database.database;
