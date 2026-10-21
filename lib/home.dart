@@ -6,6 +6,7 @@ import 'package:inkash/features/home/presentation/controllers/home_controller.da
 import 'package:inkash/features/cuentas/presentation/tarjeta_cuentas.dart';
 import 'package:inkash/features/home/presentation/widgets/abrir_formulario_movimiento.dart';
 import 'package:inkash/features/home/presentation/widgets/movimiento_tile.dart';
+import 'package:inkash/features/metas/presentation/tarjeta_metas.dart';
 import 'package:inkash/features/navegacion/navegacion_controller.dart';
 import 'package:inkash/features/tipo_cambio/presentation/tipo_cambio_card.dart';
 import 'package:inkash/theme.dart';
@@ -85,7 +86,7 @@ class HomePage extends ConsumerWidget {
           children: [
             const TarjetaCuentas(), // s16-01: datos reales
             const SizedBox(width: 12),
-            tarjetaHero('Metas de ahorro', '3 activas'),
+            const TarjetaMetas(), // s16-05: datos reales
           ],
         ),
         const SizedBox(height: 12),
@@ -125,27 +126,6 @@ class HomePage extends ConsumerWidget {
                 abrirFormularioMovimiento(context, ref, editar: movimiento),
           ),
       ],
-    );
-  }
-
-  Widget tarjetaHero(String title, String body) {
-    return Expanded(
-      child: Container(
-        decoration: BoxDecoration(
-          color: kSuperficie,
-          borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: kBorde),
-        ),
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title, style: TextStyle(fontSize: 11, color: kMuted)),
-            SizedBox(height: 2),
-            Text(body, style: TextStyle(fontSize: 19)),
-          ],
-        ),
-      ),
     );
   }
 }

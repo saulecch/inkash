@@ -18,6 +18,7 @@ class AppDatabase {
     3: _v3Cuentas,
     4: _v4Categorias,
     5: _v5Presupuestos,
+    6: _v6Metas,
   };
   static int get versionActual => migraciones.length;
 
@@ -177,6 +178,22 @@ class AppDatabase {
         categoria_id INTEGER PRIMARY KEY
           REFERENCES categorias (id) ON DELETE CASCADE,
         limite_centavos INTEGER NOT NULL CHECK (limite_centavos > 0)
+      )
+    ''');
+  }
+
+  // v6 (S16-05): metas de ahorro.
+  // Los CHECK son la última línea de defensa: aunque la UI falle,
+  // la base nunca tendrá una meta con ahorro negativo.
+  static Future<void> _v6Metas(Database db) async {
+    await db.execute('''
+      CREATE TABLE metas (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nombre TEXT NOT NULL CHECK (length(trim(nombre)) > 0),
+        objetivo_centavos INTEGER NOT NULL CHECK (objetivo_centavos > 0),
+        ahorrado_centavos INTEGER NOT NULL DEFAULT 0
+          CHECK (ahorrado_centavos >= 0),
+        creada_ms INTEGER NOT NULL
       )
     ''');
   }

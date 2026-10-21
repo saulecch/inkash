@@ -15,6 +15,8 @@ import 'package:inkash/features/home/domain/movimiento_eliminado.dart';
 import 'package:inkash/features/home/domain/nuevo_movimiento.dart';
 import 'package:inkash/features/home/domain/totales_mes.dart';
 import 'package:inkash/features/home/presentation/controllers/home_controller.dart';
+import 'package:inkash/features/metas/domain/meta.dart';
+import 'package:inkash/features/metas/presentation/metas_provider.dart';
 import 'package:inkash/features/presupuesto/domain/presupuesto_categoria.dart';
 import 'package:inkash/features/presupuesto/presentation/presupuesto_provider.dart';
 import 'package:inkash/features/tipo_cambio/domain/tipo_cambio.dart';
@@ -245,6 +247,23 @@ Widget appCon(RepositorioFalso repositorio) {
           ),
         ],
       ),
+      // s16-05: una meta activa y una completada.
+      metasProvider.overrideWith(
+        (ref) async => const [
+          Meta(
+            id: 1,
+            nombre: 'Viaje a Tikal',
+            objetivoCentavos: 200000,
+            ahorradoCentavos: 50000,
+          ),
+          Meta(
+            id: 2,
+            nombre: 'Celular',
+            objetivoCentavos: 150000,
+            ahorradoCentavos: 150000,
+          ),
+        ],
+      ),
       // La tarjeta del dólar no debe salir a internet en una prueba.
       tipoCambioProvider.overrideWith(
         (ref) async => TipoCambio(
@@ -464,5 +483,27 @@ void main() {
     expect(find.text('Te quedan −Q100.00'), findsOneWidget);
     expect(find.text('Q600.00 de Q500.00 · excedido'), findsOneWidget);
     expect(find.text('Gastado Q420.00 · sin límite'), findsOneWidget);
+  });
+
+  testWidgets('tarjeta de metas: cuenta activas y abre la pantalla', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      appCon(RepositorioFalso(() async => movimientosDeEjemplo)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('1 activa'), findsOneWidget);
+
+    // Navigator.push: la pantalla se abre ENCIMA, con flecha para volver.
+    await tester.tap(find.text('1 activa'));
+    await tester.pumpAndSettle();
+    expect(find.text('Viaje a Tikal'), findsOneWidget);
+    expect(find.text('Q500.00 de Q2,000.00'), findsOneWidget);
+    expect(find.byTooltip('Editar meta'), findsNWidgets(2));
+
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    expect(find.text('Viaje a Tikal'), findsNothing);
   });
 }
