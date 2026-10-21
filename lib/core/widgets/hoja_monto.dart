@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:inkash/core/format/parse_monto.dart';
+import 'package:inkash/core/ui/hoja_formulario.dart';
 import 'package:inkash/theme.dart';
 
 /// Resultado de [pedirMonto]: qué botón se tocó y el monto en centavos.
@@ -70,67 +71,58 @@ class _HojaMontoState extends State<_HojaMonto> {
   @override
   Widget build(BuildContext context) {
     final principal = widget.acciones.last;
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        24,
-        0,
-        24,
-        24 + MediaQuery.viewInsetsOf(context).bottom,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(widget.titulo, style: Theme.of(context).textTheme.titleLarge),
-          if (widget.ayuda != null) ...[
-            const SizedBox(height: 4),
-            Text(widget.ayuda!, style: const TextStyle(color: kMuted)),
-          ],
-          const SizedBox(height: 20),
-          TextField(
-            controller: _controller,
-            autofocus: true,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w600),
-            decoration: InputDecoration(
-              prefixText: 'Q ',
-              hintText: '0.00',
-              errorText: _controller.text.isNotEmpty && _centavos == null
-                  ? 'Mayor a 0 y hasta 2 decimales'
-                  : null,
-            ),
+    // s17-01: HojaFormulario pone título, márgenes y espacio del teclado.
+    return HojaFormulario(
+      titulo: widget.titulo,
+      children: [
+        if (widget.ayuda != null) ...[
+          const SizedBox(height: 4),
+          Text(widget.ayuda!, style: const TextStyle(color: kMuted)),
+        ],
+        const SizedBox(height: 20),
+        TextField(
+          controller: _controller,
+          autofocus: true,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w600),
+          decoration: InputDecoration(
+            prefixText: 'Q ',
+            hintText: '0.00',
+            errorText: _controller.text.isNotEmpty && _centavos == null
+                ? 'Mayor a 0 y hasta 2 decimales'
+                : null,
           ),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              for (final accion in widget.acciones.take(
-                widget.acciones.length - 1,
-              ))
-                Expanded(
-                  child: TextButton(
-                    onPressed: () => Navigator.pop(context, (
-                      accion: accion,
-                      centavos: _centavos,
-                    )),
-                    child: Text(accion),
-                  ),
-                ),
+        ),
+        const SizedBox(height: 20),
+        Row(
+          children: [
+            for (final accion in widget.acciones.take(
+              widget.acciones.length - 1,
+            ))
               Expanded(
-                flex: 2,
-                child: FilledButton(
-                  onPressed: _centavos == null
-                      ? null
-                      : () => Navigator.pop(context, (
-                          accion: principal,
-                          centavos: _centavos,
-                        )),
-                  child: Text(principal),
+                child: TextButton(
+                  onPressed: () => Navigator.pop(context, (
+                    accion: accion,
+                    centavos: _centavos,
+                  )),
+                  child: Text(accion),
                 ),
               ),
-            ],
-          ),
-        ],
-      ),
+            Expanded(
+              flex: 2,
+              child: FilledButton(
+                onPressed: _centavos == null
+                    ? null
+                    : () => Navigator.pop(context, (
+                        accion: principal,
+                        centavos: _centavos,
+                      )),
+                child: Text(principal),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

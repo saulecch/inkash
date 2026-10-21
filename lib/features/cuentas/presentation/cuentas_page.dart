@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:inkash/core/format/formato_moneda.dart';
+import 'package:inkash/core/ui/hoja_formulario.dart';
+import 'package:inkash/core/ui/monto.dart';
+import 'package:inkash/core/ui/seccion.dart';
 import 'package:inkash/core/widgets/iconos.dart';
 import 'package:inkash/features/cuentas/domain/cuenta.dart';
 import 'package:inkash/features/cuentas/presentation/cuenta_sheet.dart';
@@ -16,6 +19,7 @@ class CuentasPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cuentas = ref.watch(cuentasProvider);
+    final texto = Theme.of(context).textTheme;
     return Scaffold(
       appBar: AppBar(title: const Text('Cuentas')),
       floatingActionButton: FloatingActionButton.extended(
@@ -34,37 +38,46 @@ class CuentasPage extends ConsumerWidget {
         data: (lista) {
           final total = lista.fold(0, (t, c) => t + c.saldoCentavos);
           return ListView(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+            padding: const EdgeInsets.only(bottom: 96),
             children: [
-              Text('Total', style: TextStyle(color: kMuted, fontSize: 12)),
-              Text(
-                formatQuetzales(total),
-                style: const TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.w500,
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  Espacio.l,
+                  Espacio.s,
+                  Espacio.l,
+                  Espacio.xl,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Total en tus cuentas', style: texto.bodySmall),
+                    Monto(
+                      total,
+                      estilo: texto.displayLarge?.copyWith(fontSize: 40),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 16),
-              for (final cuenta in lista)
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: CircleAvatar(
-                    backgroundColor: kIconoFondo,
-                    child: Icon(iconoDe(cuenta.icono), color: kLima),
-                  ),
-                  title: Text(cuenta.nombre),
-                  subtitle: Text(
-                    'Inicial ${formatQuetzales(cuenta.saldoInicialCentavos)}',
-                    style: const TextStyle(color: kMuted, fontSize: 12),
-                  ),
-                  trailing: Text(
-                    formatQuetzales(cuenta.saldoCentavos),
-                    style: TextStyle(
-                      color: cuenta.saldoCentavos < 0 ? kPeligro : kTexto,
+              Seccion(
+                titulo: 'Toca una cuenta para editarla',
+                children: [
+                  for (final cuenta in lista)
+                    ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: kIconoFondo,
+                        child: Icon(iconoDe(cuenta.icono), color: kLima),
+                      ),
+                      title: Text(cuenta.nombre),
+                      subtitle: Text(
+                        'Inicial ${formatQuetzales(cuenta.saldoInicialCentavos)}',
+                        style: texto.bodySmall,
+                      ),
+                      trailing: Monto(cuenta.saldoCentavos, colorear: true),
+                      onTap: () =>
+                          _abrirFormulario(context, ref, cuenta: cuenta),
                     ),
-                  ),
-                  onTap: () => _abrirFormulario(context, ref, cuenta: cuenta),
-                ),
+                ],
+              ),
             ],
           );
         },
@@ -86,12 +99,9 @@ class CuentasPage extends ConsumerWidget {
       ref.invalidate(historialProvider);
     }
 
-    return showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      backgroundColor: kSuperficie,
-      builder: (_) => CuentaSheet(
+    return mostrarHoja<void>(
+      context,
+      (_) => CuentaSheet(
         cuenta: cuenta,
         onGuardar: (d) async {
           await repo.guardar(

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:inkash/core/format/formato_moneda.dart';
+import 'package:inkash/core/ui/estado_vacio.dart';
+import 'package:inkash/core/ui/hoja_formulario.dart';
+import 'package:inkash/core/ui/seccion.dart';
 import 'package:inkash/core/widgets/hoja_monto.dart';
 import 'package:inkash/features/metas/domain/meta.dart';
 import 'package:inkash/features/metas/presentation/meta_sheet.dart';
@@ -31,23 +34,30 @@ class MetasPage extends ConsumerWidget {
           ),
         ),
         data: (lista) => lista.isEmpty
-            ? const Center(
-                child: Text(
-                  'Aún no tienes metas.\nCrea la primera con "Nueva meta".',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: kMuted),
+            ? Center(
+                child: EstadoVacio(
+                  icono: Icons.savings_outlined,
+                  titulo: 'Aún no tienes metas',
+                  mensaje: 'Ponle nombre y monto a algo para lo que ahorras.',
+                  accion: 'Crear mi primera meta',
+                  onAccion: () => _abrirFormulario(context, ref),
                 ),
               )
             : ListView(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+                padding: const EdgeInsets.only(top: Espacio.s, bottom: 96),
                 children: [
-                  for (final meta in lista)
-                    _FilaMeta(
-                      meta: meta,
-                      onMover: () => _moverDinero(context, ref, meta),
-                      onEditar: () =>
-                          _abrirFormulario(context, ref, meta: meta),
-                    ),
+                  Seccion(
+                    titulo: 'Toca una meta para aportar o retirar',
+                    children: [
+                      for (final meta in lista)
+                        _FilaMeta(
+                          meta: meta,
+                          onMover: () => _moverDinero(context, ref, meta),
+                          onEditar: () =>
+                              _abrirFormulario(context, ref, meta: meta),
+                        ),
+                    ],
+                  ),
                 ],
               ),
       ),
@@ -60,12 +70,9 @@ class MetasPage extends ConsumerWidget {
     Meta? meta,
   }) {
     final repo = ref.read(metasRepositoryProvider);
-    return showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      backgroundColor: kSuperficie,
-      builder: (_) => MetaSheet(
+    return mostrarHoja<void>(
+      context,
+      (_) => MetaSheet(
         meta: meta,
         onGuardar: (d) async {
           meta == null
@@ -130,7 +137,6 @@ class _FilaMeta extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       onTap: onMover,
-      contentPadding: EdgeInsets.zero,
       leading: Icon(
         meta.completada ? Icons.check_circle : Icons.savings_outlined,
         color: kLima,

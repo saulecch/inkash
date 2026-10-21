@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:inkash/core/format/formato_fecha.dart';
 import 'package:inkash/core/format/formato_moneda.dart';
 import 'package:inkash/core/reloj.dart';
+import 'package:inkash/core/ui/encabezado_pagina.dart';
+import 'package:inkash/core/ui/seccion.dart';
 import 'package:inkash/core/widgets/hoja_monto.dart';
 import 'package:inkash/core/widgets/iconos.dart';
 import 'package:inkash/features/presupuesto/domain/presupuesto_categoria.dart';
@@ -27,25 +29,28 @@ class PresupuestoPage extends ConsumerWidget {
           ),
         ),
         data: (filas) => ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.only(bottom: Espacio.xxl),
           children: [
-            Text(
-              'Presupuesto · ${nombreMes(mes)}',
-              style: const TextStyle(fontSize: 20),
-            ),
-            const SizedBox(height: 4),
-            const Text(
-              'Toca una categoría para definir su límite mensual.',
-              style: TextStyle(color: kMuted, fontSize: 12),
-            ),
-            const SizedBox(height: 16),
-            _Resumen(filas: filas),
-            const SizedBox(height: 8),
-            for (final fila in filas)
-              _FilaPresupuesto(
-                fila: fila,
-                onTap: () => _editarLimite(context, ref, fila),
+            EncabezadoPagina(titulo: 'Presupuesto', subtitulo: nombreMes(mes)),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                Espacio.l,
+                0,
+                Espacio.l,
+                Espacio.xl,
               ),
+              child: _Resumen(filas: filas),
+            ),
+            Seccion(
+              titulo: 'Toca una categoría para definir su límite mensual',
+              children: [
+                for (final fila in filas)
+                  _FilaPresupuesto(
+                    fila: fila,
+                    onTap: () => _editarLimite(context, ref, fila),
+                  ),
+              ],
+            ),
           ],
         ),
       ),
@@ -86,20 +91,23 @@ class _FilaPresupuesto extends StatelessWidget {
     final limite = fila.limiteCentavos;
     return ListTile(
       onTap: onTap,
-      contentPadding: EdgeInsets.zero,
       leading: Icon(iconoDe(fila.icono), color: kLima),
       title: Text(fila.nombre),
+      trailing: const Icon(Icons.chevron_right),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 6),
+          const SizedBox(height: Espacio.s),
           if (fila.progreso != null)
-            LinearProgressIndicator(
-              value: fila.progreso,
-              minHeight: 6,
-              color: fila.excedido ? kPeligro : kLima,
+            ClipRRect(
+              borderRadius: BorderRadius.circular(Espacio.xs),
+              child: LinearProgressIndicator(
+                value: fila.progreso,
+                minHeight: 6,
+                color: fila.excedido ? kPeligro : kLima,
+              ),
             ),
-          const SizedBox(height: 4),
+          const SizedBox(height: Espacio.xs),
           Text(
             limite == null
                 ? 'Gastado ${formatQuetzales(fila.gastadoCentavos)} · sin límite'
@@ -127,38 +135,41 @@ class _Resumen extends StatelessWidget {
   Widget build(BuildContext context) {
     final conLimite = filas.where((f) => f.limiteCentavos != null);
     if (conLimite.isEmpty) {
-      return const Text(
+      return Text(
         'Aún no tienes límites. Empieza por la categoría donde más gastas.',
-        style: TextStyle(color: kMuted),
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: kMuted),
       );
     }
     final limite = conLimite.fold(0, (t, f) => t + f.limiteCentavos!);
     final gastado = conLimite.fold(0, (t, f) => t + f.gastadoCentavos);
     final excedidas = conLimite.where((f) => f.excedido).length;
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: kSuperficie,
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: kBorde),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Te quedan ${formatQuetzales(limite - gastado)}',
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w500),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            '${formatQuetzales(gastado)} de ${formatQuetzales(limite)}'
-            '${excedidas > 0 ? ' · $excedidas excedida${excedidas > 1 ? 's' : ''}' : ''}',
-            style: TextStyle(
-              fontSize: 12,
-              color: excedidas > 0 ? kPeligro : kMuted,
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(Espacio.l),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              gastado > limite
+                  ? 'Te pasaste por ${formatQuetzales(gastado - limite)}'
+                  : 'Te quedan ${formatQuetzales(limite - gastado)}',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontFeatures: kNumerosTabulares,
+                color: gastado > limite ? kPeligro : kTexto,
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: Espacio.xs),
+            Text(
+              '${formatQuetzales(gastado)} de ${formatQuetzales(limite)}'
+              '${excedidas > 0 ? ' · $excedidas excedida${excedidas > 1 ? 's' : ''}' : ''}',
+              style: TextStyle(
+                fontSize: 12,
+                color: excedidas > 0 ? kPeligro : kMuted,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

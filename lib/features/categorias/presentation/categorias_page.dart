@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:inkash/core/ui/hoja_formulario.dart';
+import 'package:inkash/core/ui/seccion.dart';
 import 'package:inkash/core/widgets/iconos.dart';
 import 'package:inkash/features/categorias/domain/categoria.dart';
 import 'package:inkash/features/categorias/presentation/categoria_sheet.dart';
@@ -34,7 +36,7 @@ class CategoriasPage extends ConsumerWidget {
               lista.where((c) => c.tipo == t && !c.archivada);
           final archivadas = lista.where((c) => c.archivada);
           return ListView(
-            padding: const EdgeInsets.only(bottom: 96),
+            padding: const EdgeInsets.only(top: Espacio.s, bottom: 96),
             children: [
               _Seccion('Gastos', de(TipoCategoria.gasto), ref),
               _Seccion('Ingresos', de(TipoCategoria.ingreso), ref),
@@ -57,16 +59,11 @@ class _Seccion extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    if (categorias.isEmpty) return const SizedBox.shrink();
+    // s17-01: el componente Seccion del sistema de diseño.
+    return Seccion(
+      titulo: titulo,
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-          child: Text(
-            titulo,
-            style: const TextStyle(color: kLima, fontSize: 12),
-          ),
-        ),
         for (final c in categorias)
           ListTile(
             leading: Icon(
@@ -77,7 +74,7 @@ class _Seccion extends StatelessWidget {
               c.nombre,
               style: TextStyle(color: c.archivada ? kMuted : kTexto),
             ),
-            trailing: const Icon(Icons.chevron_right, color: kMuted),
+            trailing: const Icon(Icons.chevron_right),
             onTap: () => abrirFormularioCategoria(context, ref, categoria: c),
           ),
       ],
@@ -102,12 +99,9 @@ Future<String?> abrirFormularioCategoria(
     ref.invalidate(categoriasUsadasProvider);
   }
 
-  return showModalBottomSheet<String>(
-    context: context,
-    isScrollControlled: true,
-    showDragHandle: true,
-    backgroundColor: kSuperficie,
-    builder: (_) => CategoriaSheet(
+  return mostrarHoja<String>(
+    context,
+    (_) => CategoriaSheet(
       categoria: categoria,
       tipoInicial: tipoInicial,
       onGuardar: (d) async {

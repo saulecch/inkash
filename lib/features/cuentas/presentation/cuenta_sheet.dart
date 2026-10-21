@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:inkash/core/format/parse_monto.dart';
 import 'package:inkash/core/widgets/selector_icono.dart';
 import 'package:inkash/features/cuentas/domain/cuenta.dart';
+import 'package:inkash/core/ui/hoja_formulario.dart';
 import 'package:inkash/theme.dart';
 
 // Datos que el formulario de cuenta devuelve al guardar.
@@ -90,83 +91,70 @@ class _CuentaSheetState extends State<CuentaSheet> {
   @override
   Widget build(BuildContext context) {
     final editando = widget.cuenta != null;
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        24,
-        0,
-        24,
-        24 + MediaQuery.viewInsetsOf(context).bottom,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            editando ? 'Editar cuenta' : 'Nueva cuenta',
-            style: Theme.of(context).textTheme.titleLarge,
+    // s17-01: HojaFormulario pone título, márgenes y espacio del teclado.
+    return HojaFormulario(
+      titulo: editando ? 'Editar cuenta' : 'Nueva cuenta',
+      children: [
+        TextField(
+          controller: _nombre,
+          autofocus: !editando,
+          textCapitalization: TextCapitalization.sentences,
+          decoration: const InputDecoration(
+            labelText: 'Nombre',
+            hintText: 'Ej. Banco Industrial',
           ),
-          const SizedBox(height: 20),
-          TextField(
-            controller: _nombre,
-            autofocus: !editando,
-            textCapitalization: TextCapitalization.sentences,
-            decoration: const InputDecoration(
-              labelText: 'Nombre',
-              hintText: 'Ej. Banco Industrial',
-            ),
-          ),
-          const SizedBox(height: 16),
-          SelectorIcono(
-            opciones: CuentaSheet.iconos,
-            seleccionado: _icono,
-            onSeleccionar: (i) => setState(() => _icono = i),
-          ),
-          const SizedBox(height: 20),
-          SegmentedButton<bool>(
-            segments: const [
-              ButtonSegment(value: false, label: Text('Tengo')),
-              ButtonSegment(value: true, label: Text('Debo')),
-            ],
-            selected: {_esDeuda},
-            showSelectedIcon: false,
-            onSelectionChanged: (s) => setState(() => _esDeuda = s.single),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _saldo,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: InputDecoration(
-              labelText: _esDeuda ? 'Deuda al empezar' : 'Saldo al empezar',
-              prefixText: 'Q ',
-              helperText: 'Lo que había antes de registrar movimientos',
-              errorText: _saldoCentavos == null ? 'Monto inválido' : null,
-            ),
-          ),
-          if (_error != null) ...[
-            const SizedBox(height: 12),
-            Text(_error!, style: const TextStyle(color: kPeligro)),
+        ),
+        const SizedBox(height: 16),
+        SelectorIcono(
+          opciones: CuentaSheet.iconos,
+          seleccionado: _icono,
+          onSeleccionar: (i) => setState(() => _icono = i),
+        ),
+        const SizedBox(height: 20),
+        SegmentedButton<bool>(
+          segments: const [
+            ButtonSegment(value: false, label: Text('Tengo')),
+            ButtonSegment(value: true, label: Text('Debo')),
           ],
-          const SizedBox(height: 20),
-          FilledButton(
-            onPressed: _valido && !_ocupado
-                ? () => _ejecutar(
-                    () => widget.onGuardar((
-                      nombre: _nombre.text,
-                      icono: _icono,
-                      saldoInicialCentavos: _saldoCentavos!,
-                    )),
-                  )
-                : null,
-            child: Text(editando ? 'Guardar cambios' : 'Crear cuenta'),
+          selected: {_esDeuda},
+          showSelectedIcon: false,
+          onSelectionChanged: (s) => setState(() => _esDeuda = s.single),
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _saldo,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: InputDecoration(
+            labelText: _esDeuda ? 'Deuda al empezar' : 'Saldo al empezar',
+            prefixText: 'Q ',
+            helperText: 'Lo que había antes de registrar movimientos',
+            errorText: _saldoCentavos == null ? 'Monto inválido' : null,
           ),
-          if (widget.onEliminar != null)
-            TextButton(
-              onPressed: _ocupado ? null : () => _ejecutar(widget.onEliminar!),
-              style: TextButton.styleFrom(foregroundColor: kPeligro),
-              child: const Text('Eliminar cuenta'),
-            ),
+        ),
+        if (_error != null) ...[
+          const SizedBox(height: 12),
+          Text(_error!, style: const TextStyle(color: kPeligro)),
         ],
-      ),
+        const SizedBox(height: 20),
+        FilledButton(
+          onPressed: _valido && !_ocupado
+              ? () => _ejecutar(
+                  () => widget.onGuardar((
+                    nombre: _nombre.text,
+                    icono: _icono,
+                    saldoInicialCentavos: _saldoCentavos!,
+                  )),
+                )
+              : null,
+          child: Text(editando ? 'Guardar cambios' : 'Crear cuenta'),
+        ),
+        if (widget.onEliminar != null)
+          TextButton(
+            onPressed: _ocupado ? null : () => _ejecutar(widget.onEliminar!),
+            style: TextButton.styleFrom(foregroundColor: kPeligro),
+            child: const Text('Eliminar cuenta'),
+          ),
+      ],
     );
   }
 }

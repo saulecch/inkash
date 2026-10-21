@@ -344,11 +344,17 @@ void main() {
 
     // IndexedStack: las pestañas ocultas existen pero están "offstage",
     // y find las ignora por defecto.
-    expect(find.text('Presupuesto · Octubre 2026'), findsNothing);
+    expect(
+      find.text('Toca una categoría para definir su límite mensual'),
+      findsNothing,
+    );
 
     await tester.tap(find.text('Presupuesto'));
     await tester.pumpAndSettle();
-    expect(find.text('Presupuesto · Octubre 2026'), findsOneWidget);
+    expect(
+      find.text('Toca una categoría para definir su límite mensual'),
+      findsOneWidget,
+    );
 
     await tester.tap(find.text('Inicio'));
     await tester.pumpAndSettle();
@@ -389,7 +395,7 @@ void main() {
 
     await tester.tap(find.byTooltip('Mes anterior'));
     await tester.pumpAndSettle();
-    expect(find.text('Sin movimientos en este mes.'), findsOneWidget);
+    expect(find.text('Sin movimientos en Agosto 2026'), findsOneWidget);
   });
 
   testWidgets('Historial: deslizar elimina y "Deshacer" lo regresa', (
@@ -480,7 +486,7 @@ void main() {
     await tester.tap(find.text('Presupuesto'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Te quedan −Q100.00'), findsOneWidget);
+    expect(find.text('Te pasaste por Q100.00'), findsOneWidget);
     expect(find.text('Q600.00 de Q500.00 · excedido'), findsOneWidget);
     expect(find.text('Gastado Q420.00 · sin límite'), findsOneWidget);
   });

@@ -6,7 +6,6 @@ import 'package:inkash/features/home/presentation/widgets/abrir_formulario_movim
 import 'package:inkash/features/navegacion/navegacion_controller.dart';
 import 'package:inkash/features/presupuesto/presentation/presupuesto_page.dart';
 import 'package:inkash/home.dart';
-import 'package:inkash/theme.dart';
 
 // El "cascarón" de la app: la barra inferior y las pantallas de cada pestaña.
 // Antes la barra vivía dentro de HomePage, así que solo existía el Inicio.
@@ -51,7 +50,6 @@ class InkashShell extends ConsumerWidget {
           ref.read(navegacionProvider.notifier).ir(_pestanasPorIndice[index]!);
         },
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: kLima,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Inicio'),
           BottomNavigationBarItem(

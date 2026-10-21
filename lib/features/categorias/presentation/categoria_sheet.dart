@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:inkash/core/widgets/selector_icono.dart';
 import 'package:inkash/features/categorias/domain/categoria.dart';
+import 'package:inkash/core/ui/hoja_formulario.dart';
 import 'package:inkash/theme.dart';
 
 typedef DatosCategoria = ({String nombre, String icono, TipoCategoria tipo});
@@ -86,93 +87,77 @@ class _CategoriaSheetState extends State<CategoriaSheet> {
   @override
   Widget build(BuildContext context) {
     final categoria = widget.categoria;
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        24,
-        0,
-        24,
-        24 + MediaQuery.viewInsetsOf(context).bottom,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            categoria == null ? 'Nueva categoría' : 'Editar categoría',
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(height: 20),
-          SegmentedButton<TipoCategoria>(
-            segments: const [
-              ButtonSegment(value: TipoCategoria.gasto, label: Text('Gasto')),
-              ButtonSegment(
-                value: TipoCategoria.ingreso,
-                label: Text('Ingreso'),
-              ),
-            ],
-            selected: {_tipo},
-            showSelectedIcon: false,
-            onSelectionChanged: (s) => setState(() => _tipo = s.single),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _nombre,
-            autofocus: categoria == null,
-            textCapitalization: TextCapitalization.sentences,
-            decoration: const InputDecoration(
-              labelText: 'Nombre',
-              hintText: 'Ej. Mascotas',
-            ),
-          ),
-          const SizedBox(height: 16),
-          SelectorIcono(
-            opciones: CategoriaSheet.iconos,
-            seleccionado: _icono,
-            onSeleccionar: (i) => setState(() => _icono = i),
-          ),
-          if (_error != null) ...[
-            const SizedBox(height: 12),
-            Text(_error!, style: const TextStyle(color: kPeligro)),
+    // s17-01: HojaFormulario pone título, márgenes y espacio del teclado.
+    return HojaFormulario(
+      titulo: categoria == null ? 'Nueva categoría' : 'Editar categoría',
+      children: [
+        SegmentedButton<TipoCategoria>(
+          segments: const [
+            ButtonSegment(value: TipoCategoria.gasto, label: Text('Gasto')),
+            ButtonSegment(value: TipoCategoria.ingreso, label: Text('Ingreso')),
           ],
-          const SizedBox(height: 20),
-          FilledButton(
-            onPressed: _nombre.text.trim().isEmpty || _ocupado
-                ? null
-                : () => _ejecutar(
-                    () => widget.onGuardar((
-                      nombre: _nombre.text,
-                      icono: _icono,
-                      tipo: _tipo,
-                    )),
-                    resultado: _nombre.text.trim(),
-                  ),
-            child: Text(
-              categoria == null ? 'Crear categoría' : 'Guardar cambios',
-            ),
+          selected: {_tipo},
+          showSelectedIcon: false,
+          onSelectionChanged: (s) => setState(() => _tipo = s.single),
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _nombre,
+          autofocus: categoria == null,
+          textCapitalization: TextCapitalization.sentences,
+          decoration: const InputDecoration(
+            labelText: 'Nombre',
+            hintText: 'Ej. Mascotas',
           ),
-          if (categoria != null)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (widget.onArchivar != null)
-                  TextButton(
-                    onPressed: _ocupado
-                        ? null
-                        : () => _ejecutar(widget.onArchivar!),
-                    child: Text(categoria.archivada ? 'Restaurar' : 'Archivar'),
-                  ),
-                if (widget.onEliminar != null)
-                  TextButton(
-                    onPressed: _ocupado
-                        ? null
-                        : () => _ejecutar(widget.onEliminar!),
-                    style: TextButton.styleFrom(foregroundColor: kPeligro),
-                    child: const Text('Eliminar'),
-                  ),
-              ],
-            ),
+        ),
+        const SizedBox(height: 16),
+        SelectorIcono(
+          opciones: CategoriaSheet.iconos,
+          seleccionado: _icono,
+          onSeleccionar: (i) => setState(() => _icono = i),
+        ),
+        if (_error != null) ...[
+          const SizedBox(height: 12),
+          Text(_error!, style: const TextStyle(color: kPeligro)),
         ],
-      ),
+        const SizedBox(height: 20),
+        FilledButton(
+          onPressed: _nombre.text.trim().isEmpty || _ocupado
+              ? null
+              : () => _ejecutar(
+                  () => widget.onGuardar((
+                    nombre: _nombre.text,
+                    icono: _icono,
+                    tipo: _tipo,
+                  )),
+                  resultado: _nombre.text.trim(),
+                ),
+          child: Text(
+            categoria == null ? 'Crear categoría' : 'Guardar cambios',
+          ),
+        ),
+        if (categoria != null)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (widget.onArchivar != null)
+                TextButton(
+                  onPressed: _ocupado
+                      ? null
+                      : () => _ejecutar(widget.onArchivar!),
+                  child: Text(categoria.archivada ? 'Restaurar' : 'Archivar'),
+                ),
+              if (widget.onEliminar != null)
+                TextButton(
+                  onPressed: _ocupado
+                      ? null
+                      : () => _ejecutar(widget.onEliminar!),
+                  style: TextButton.styleFrom(foregroundColor: kPeligro),
+                  child: const Text('Eliminar'),
+                ),
+            ],
+          ),
+      ],
     );
   }
 }

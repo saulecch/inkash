@@ -357,8 +357,13 @@ class _MovimientoBottomSheetState extends State<MovimientoBottomSheet> {
                       ChoiceChip(
                         label: Text(cuenta.nombre),
                         selected: _cuentaId == cuenta.id,
-                        selectedColor: kIconoFondo,
-                        backgroundColor: kSuperficie,
+                        // Mismo lenguaje visual que las categorías: lo elegido va en lima.
+                        labelStyle: TextStyle(
+                          color: _cuentaId == cuenta.id ? kLima : kTexto,
+                        ),
+                        side: BorderSide(
+                          color: _cuentaId == cuenta.id ? kLima : kBorde,
+                        ),
                         showCheckmark: false,
                         onSelected: (_) =>
                             setState(() => _cuentaId = cuenta.id),

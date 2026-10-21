@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:inkash/core/format/formato_fecha.dart';
 import 'package:inkash/core/format/formato_moneda.dart';
+import 'package:inkash/core/ui/encabezado_pagina.dart';
+import 'package:inkash/core/ui/estado_vacio.dart';
 import 'package:inkash/features/historial/historial_controller.dart';
 import 'package:inkash/features/home/domain/movimiento.dart';
 import 'package:inkash/features/home/presentation/controllers/home_controller.dart';
@@ -21,24 +23,21 @@ class HistorialPage extends ConsumerWidget {
     return SafeArea(
       child: Column(
         children: [
-          // Selector de mes: ‹ Octubre 2026 ›
-          Padding(
-            padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-            child: Row(
+          // s17-01: el mismo encabezado que las demás pestañas; el selector
+          // de mes es su acción.
+          EncabezadoPagina(
+            titulo: 'Historial',
+            subtitulo: nombreMes(filtro.mes),
+            accion: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                IconButton(
+                IconButton.outlined(
                   tooltip: 'Mes anterior',
                   onPressed: controller.mesAnterior,
                   icon: const Icon(Icons.chevron_left),
                 ),
-                Expanded(
-                  child: Text(
-                    nombreMes(filtro.mes),
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 18),
-                  ),
-                ),
-                IconButton(
+                const SizedBox(width: Espacio.s),
+                IconButton.outlined(
                   tooltip: 'Mes siguiente',
                   onPressed: controller.mesSiguiente,
                   icon: const Icon(Icons.chevron_right),
@@ -66,10 +65,15 @@ class HistorialPage extends ConsumerWidget {
                 ),
               ),
               data: (lista) => lista.isEmpty
-                  ? const Center(
-                      child: Text(
-                        'Sin movimientos en este mes.',
-                        style: TextStyle(color: kMuted),
+                  ? Center(
+                      child: EstadoVacio(
+                        icono: Icons.event_busy_outlined,
+                        titulo: 'Sin movimientos en ${nombreMes(filtro.mes)}',
+                        mensaje: filtro.categoria == null
+                            ? null
+                            : 'Prueba con "Todas" las categorías.',
+                        accion: 'Registrar movimiento',
+                        onAccion: () => abrirFormularioMovimiento(context, ref),
                       ),
                     )
                   : _ListaAgrupada(movimientos: lista),
@@ -97,11 +101,11 @@ class _ChipsCategoria extends ConsumerWidget {
       height: 48,
       child: ListView(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
+        padding: const EdgeInsets.symmetric(horizontal: Espacio.l),
         children: [
           for (final nombre in [null, ...categorias])
             Padding(
-              padding: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsets.only(right: Espacio.s),
               child: ChoiceChip(
                 label: Text(nombre ?? 'Todas'),
                 selected: seleccionada == nombre,
@@ -131,7 +135,12 @@ class _ListaAgrupada extends StatelessWidget {
 
     final filas = <Widget>[
       Padding(
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+        padding: const EdgeInsets.fromLTRB(
+          Espacio.l,
+          Espacio.m,
+          Espacio.l,
+          Espacio.s,
+        ),
         child: Text(
           'Gastos ${formatQuetzales(gastos)} · '
           'Ingresos ${formatQuetzales(ingresos)}',
@@ -146,10 +155,19 @@ class _ListaAgrupada extends StatelessWidget {
       if (dia != diaAnterior) {
         filas.add(
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+            padding: const EdgeInsets.fromLTRB(
+              Espacio.l,
+              Espacio.l,
+              Espacio.l,
+              Espacio.xs,
+            ),
             child: Text(
               m.fecha,
-              style: const TextStyle(color: kLima, fontSize: 12),
+              style: const TextStyle(
+                color: kLima,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
         );

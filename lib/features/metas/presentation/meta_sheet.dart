@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:inkash/core/format/parse_monto.dart';
 import 'package:inkash/features/metas/domain/meta.dart';
+import 'package:inkash/core/ui/hoja_formulario.dart';
 import 'package:inkash/theme.dart';
 
 typedef DatosMeta = ({String nombre, int objetivoCentavos});
@@ -62,60 +63,47 @@ class _MetaSheetState extends State<MetaSheet> {
   @override
   Widget build(BuildContext context) {
     final valido = _nombre.text.trim().isNotEmpty && _objetivoCentavos != null;
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        24,
-        0,
-        24,
-        24 + MediaQuery.viewInsetsOf(context).bottom,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            widget.meta == null ? 'Nueva meta' : 'Editar meta',
-            style: Theme.of(context).textTheme.titleLarge,
+    // s17-01: HojaFormulario pone título, márgenes y espacio del teclado.
+    return HojaFormulario(
+      titulo: widget.meta == null ? 'Nueva meta' : 'Editar meta',
+      children: [
+        TextField(
+          controller: _nombre,
+          autofocus: widget.meta == null,
+          textCapitalization: TextCapitalization.sentences,
+          decoration: const InputDecoration(
+            labelText: 'Nombre',
+            hintText: 'Ej. Viaje a Tikal',
           ),
-          const SizedBox(height: 20),
-          TextField(
-            controller: _nombre,
-            autofocus: widget.meta == null,
-            textCapitalization: TextCapitalization.sentences,
-            decoration: const InputDecoration(
-              labelText: 'Nombre',
-              hintText: 'Ej. Viaje a Tikal',
-            ),
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _objetivo,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: const InputDecoration(
+            labelText: 'Objetivo',
+            prefixText: 'Q ',
           ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _objetivo,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: const InputDecoration(
-              labelText: 'Objetivo',
-              prefixText: 'Q ',
-            ),
+        ),
+        const SizedBox(height: 20),
+        FilledButton(
+          onPressed: valido && !_ocupado
+              ? () => _ejecutar(
+                  () => widget.onGuardar((
+                    nombre: _nombre.text,
+                    objetivoCentavos: _objetivoCentavos!,
+                  )),
+                )
+              : null,
+          child: Text(widget.meta == null ? 'Crear meta' : 'Guardar cambios'),
+        ),
+        if (widget.onEliminar != null)
+          TextButton(
+            onPressed: _ocupado ? null : () => _ejecutar(widget.onEliminar!),
+            style: TextButton.styleFrom(foregroundColor: kPeligro),
+            child: const Text('Eliminar meta'),
           ),
-          const SizedBox(height: 20),
-          FilledButton(
-            onPressed: valido && !_ocupado
-                ? () => _ejecutar(
-                    () => widget.onGuardar((
-                      nombre: _nombre.text,
-                      objetivoCentavos: _objetivoCentavos!,
-                    )),
-                  )
-                : null,
-            child: Text(widget.meta == null ? 'Crear meta' : 'Guardar cambios'),
-          ),
-          if (widget.onEliminar != null)
-            TextButton(
-              onPressed: _ocupado ? null : () => _ejecutar(widget.onEliminar!),
-              style: TextButton.styleFrom(foregroundColor: kPeligro),
-              child: const Text('Eliminar meta'),
-            ),
-        ],
-      ),
+      ],
     );
   }
 }
